@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+
+cat <<EOF > /tmp/a2v-template
+<VirtualHost *:80>
+  ServerName DOMAIN.localhost
+  ServerAlias *.DOMAIN.localhost
+  ServerAdmin webmaster@DOMAIN.localhost
+  DocumentRoot DOCUMENTROOT/DOMAIN
+</VirtualHost>
+<VirtualHost *:443>
+  ServerName DOMAIN.localhost
+  ServerAlias *.DOMAIN.localhost
+  ServerAdmin webmaster@DOMAIN.localhost
+  DocumentRoot DOCUMENTROOT/DOMAIN
+  SSLEngine on
+  SSLCertificateFile /etc/ssl/certs/DOMAIN.localhost.pem
+  <FilesMatch "\.(cgi|shtml|phtml|php)$">
+    SSLOptions +StdEnvVars
+  </FilesMatch>
+  <Directory /usr/lib/cgi-bin>
+    SSLOptions +StdEnvVars
+  </Directory>
+</VirtualHost>
+EOF
+
+function in_array() {
+  local x
+  for x in ${@:2}; do [ "$1" == "$x" ] && return 0; done
+  return 1
+}
+
+function usage() {
+  echo "Usage: a2v -c -db domain@database domain..."
+  echo
+  echo "OPTIONS:"
+  echo " -c Create or recreate if exists the VirtualHost for domain"
+  echo "    -db Create database if not exists, if you do not specify it used the domain,"
+  echo "        when there is more than one domain must be specified for each."
+  echo "    After create if enabled automatically"
+  echo " -r Delete the VirtualHost for domain"
+  echo "    -db Delete database if exists, if you do not specify it used the domain,"
+  echo "        when there is more than one domain must be specified for each."
+  echo " -e Enable the VirtualHost for domain"
+  echo " -d Disable the VirtualHost for domain"
+  echo " -l List all VirtualHosts"
+  echo " -h Print this text and exit"
+  echo
+  echo "* Always append the localhost TLD to domain"
+  echo "* Use DOCUMENTROOT/domain for DocumentRoot"
+  echo "* Ask for sudo password, when you create or delete VirtualHost"
+  echo "* Auto generate certificates using a2c command."
+  echo "* All VirtualHosts saved to /etc/apache2/sites-available"
+  echo "* Multiples domains is supported"
+  echo
+  exit
+}
+
+[ $# -gt 0 ] || usage
+
+
+ACTION=""
+while [[ $# -gt 0 ]]; do
+  case "${1}" in
+    -h ) usage ;;
+    -c|-r|-e|-d )
+      if [[ -z "${ACTION}" ]]; then
+        ACTION="${1/-/}"
+        shift
+      else
+        echo "Only allowed one option"
+        exit
+      fi
+      ;;
+    -l )
+      a=( `ls /etc/apache2/sites-available | sed -E 's/\.conf$//g'` )
+      if [[ ${#a[@]} -gt 0 ]]; then
+        e=( `ls /etc/apache2/sites-enabled | sed -E 's/\.conf$//g'` )
+        for x in "${a[@]}"; do
+          echo -n " - $x "
+          if in_array $x ${e[@]}; then
+            echo "(Enabled)"
+          else
+            echo "(Disabled)"
+          fi
+        done
+      fi
+      exit
+      ;;
+    * ) break ;;
+  esac
+done
+
+DOMAINS=()
+DATABASES=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -db )
+        if [[ "${2:-}" != "" ]]; then
+          if echo "$2" | grep -q "@"; then
+            DOMAINS+=( `echo "$2" | awk -F "@" '{print $1}'` )
+            DATABASES+=( `echo $2 | awk -F "@" '{print $2}'` )
+          else
+            DOMAINS+=( "$2" )
+            DATABASES+=( "$2" )
+          fi
+          shift
+        fi
+        shift
+      ;;
+    * )
+      if ! echo "$1" | grep -qP "^[\w\-]+(\.[\w]+)?$"; then
+        echo "Invalid $1 domain, skipping"
+      else
+        DOMAINS+=( "$1" )
+      fi
+      shift
+      ;;
+  esac
+done
+
+if [[ ${#DOMAINS[@]} -gt 0 ]]; then
+  sudo -p "Sudo session, enter password: " echo -n ""
+  if [[ "${ACTION}" == "c" ]]; then
+    for domain in "${DOMAINS[@]}"; do
+      a2c -i "${domain}.localhost"
+      if [[ $? -eq 0 ]]; then
+        sudo cp -f /tmp/a2v-template "/etc/apache2/sites-available/${domain}.conf"
+        sudo sed -i "s/DOMAIN/${domain}/g" "/etc/apache2/sites-available/${domain}.conf"
+        sudo a2ensite "${domain}" &>/dev/null
+      fi
+    done
+    for db in "${DATABASES[@]}"; do
+      sudo mysql -uroot -e "CREATE DATABASE IF NOT EXISTS $db;"
+    done
+  elif [[ "${ACTION}" == "r" ]]; then
+    for domain in "${DOMAINS[@]}"; do
+      sudo find /etc/apache2/sites-* ! -type d -name "${domain}.conf" -delete;
+      a2c -r "${domain}.localhost"
+    done
+    for db in "${DATABASES[@]}"; do
+      sudo mysql -uroot -e "DROP DATABASE IF EXISTS $db;"
+    done
+  elif [[ "${ACTION}" == "e" ]]; then
+    for domain in "${DOMAINS[@]}"; do
+      if [[ ! -f "/etc/apache2/sites-available/${domain}.conf" ]]; then
+        a2v -c "${domain}"
+      elif [[ ! -f "/etc/apache2/sites-enabled/${domain}.conf" ]]; then
+        sudo a2ensite "${domain}" &>/dev/null
+      fi
+    done
+  elif [[ "${ACTION}" == "d" ]]; then
+    sudo a2dissite ${DOMAINS[@]} &>/dev/null
+  fi
+  sudo systemctl restart apache2
+  exit
+fi

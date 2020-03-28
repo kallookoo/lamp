@@ -1,0 +1,12 @@
+[Unit]
+Description=MailHog Email Catcher
+After=apache2.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/mailhog -storage maildir -maildir-path /tmp/mailhog
+StandardOutput=journal
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
