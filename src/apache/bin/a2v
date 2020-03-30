@@ -13,7 +13,7 @@ cat <<EOF > /tmp/a2v-template
   ServerAdmin webmaster@DOMAIN.localhost
   DocumentRoot DOCUMENTROOT/DOMAIN
   SSLEngine on
-  SSLCertificateFile /etc/ssl/certs/DOMAIN.localhost.pem
+  SSLCertificateFile /etc/apache2/certs/DOMAIN.localhost.pem
   <FilesMatch "\.(cgi|shtml|phtml|php)$">
     SSLOptions +StdEnvVars
   </FilesMatch>

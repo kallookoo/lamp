@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MKCERT_DIRECTORY="/etc/ssl/certs"
+MKCERT_DIRECTORY="/etc/apache2/certs"
 
 # Simple validator for domains
 # to prevent use wildcards or subdomains

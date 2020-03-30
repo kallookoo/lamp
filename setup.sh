@@ -6,17 +6,19 @@ SRC_PATH="${SETUP_PATH}/src"
 USER_BIN_DIR="${HOME}/.local/bin"
 
 DEFAULT_DOMAIN="$(hostname).localhost"
-USER_APACHE_DIR="${HOME}/Developer/sites"
+USER_APACHE_DIR="${HOME}/Developer/www"
 PMA_LANG=es
 
 INSTALL_PACKAGES=(
   git
+  git-extras
   git-lfs
   subversion
   nodejs
   yarn
   imagemagick
   libnss3-tools # mkcert
+
   # server
   apache2
   mariadb-server
@@ -151,7 +153,9 @@ MODULES=(
 )
 MODS_ENABLED="$(ls /etc/apache2/mods-enabled)"
 for x in "${MODULES[@]}"; do echo "${MODS_ENABLED}" | grep -q "${x}" || sudo a2enmod "${x}"; done; unset x
-for x in conf sites; do sudo find "/etc/apache2/$x-enabled/" \! -type d -delete; done; unset x
+sudo rm -f /etc/apache2/mods-enabled/status.{conf,load}
+sudo find /etc/apache2/conf-enabled ! -type d -delete
+sudo find /etc/apache2/sites-enabled ! -type d -name "*default*" -delete
 sudo find /etc/apache2/sites-available ! -type d -name "*default*" -delete
 [ -f /etc/apache2/apache2.conf.original ] || sudo mv /etc/apache2/apache2.conf{,.original}
 sudo cp -f "${SRC_PATH}/apache/apache2.conf" /etc/apache2/apache2.conf
@@ -161,7 +165,11 @@ rsync -azh "${SRC_PATH}/apache/bin/" "${USER_BIN_DIR}/"
 sed -i "s@DOCUMENTROOT@${USER_APACHE_DIR}@g" "${USER_BIN_DIR}/a2v"
 chmod +x -R "${USER_BIN_DIR}/"
 a2c -i "${DEFAULT_DOMAIN}" &>/dev/null
-
+[ -d "${USER_APACHE_DIR}" ] || mkdir -p "${USER_APACHE_DIR}"
+sudo find "${USER_APACHE_DIR}" -type f -exec chmod 644 {} \;
+sudo find "${USER_APACHE_DIR}" -type d -exec chmod 755 {} \;
+sudo chown -R "$USER:www-data" "${USER_APACHE_DIR}"
+sudo chmod g+s "${USER_APACHE_DIR}"
 
 # PHP SETUP
 echo "Installing PHP"
@@ -181,6 +189,9 @@ for php_version in $(ls /etc/php); do
       fi
       if [[ -f "/etc/php/$php_version/fpm/php-fpm.conf" ]]; then
         sudo sed -i 's@^error_log.*@error_log = /var/log/php-fpm.log@' "/etc/php/$php_version/fpm/php-fpm.conf"
+      fi
+      if [[ -f "/etc/php/$php_version/fpm/pool.d/user.conf" ]]; then
+        sudo sed -i "s/CURRENT_USER/${USER}/" "/etc/php/$php_version/fpm/pool.d/user.conf"
       fi
     fi
 done
@@ -210,7 +221,8 @@ if [[ ! -d /var/www/html/phpmyadmin ]]; then
   (
     echo "CREATE DATABASE IF NOT EXISTS phpmyadmin DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;"
     echo "DROP USER IF EXISTS 'pma'@'localhost';"
-    echo "GRANT SELECT, INSERT, UPDATE, DELETE, ALTER ON phpmyadmin.* TO 'pma'@'localhost' IDENTIFIED BY '${PMA_PASSWORD}';"
+    echo -n "GRANT SELECT, INSERT, UPDATE, DELETE, ALTER ON phpmyadmin.* TO 'pma'@'localhost'"
+    echo " IDENTIFIED VIA mysql_native_password USING PASSWORD('${PMA_PASSWORD}');"
     echo "FLUSH PRIVILEGES;"
   ) | sudo mysql -uroot
   sudo mysql -uroot < /var/www/html/phpmyadmin/sql/create_tables.sql
@@ -290,3 +302,9 @@ for x in "${YARN_GLOBAL_PACKAGES_LIST[@]}"; do echo "${YARN_INSTALLED}" | grep -
 echo "Server services"
 sudo systemctl daemon-reload
 sudo systemctl restart apache2 mariadb php7.4-fpm mailhog
+
+# APACHE USER
+if ! groups | grep -q "www-data"; then
+  sudo usermod -aG www-data "${USER}"
+  echo "REQUIRED REBOOT THIS SYSTEM"
+fi
