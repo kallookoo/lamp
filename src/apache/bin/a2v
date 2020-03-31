@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 
 cat <<EOF > /tmp/a2v-template
-<VirtualHost *:80>
-  ServerName DOMAIN.localhost
-  ServerAlias *.DOMAIN.localhost
-  ServerAdmin webmaster@DOMAIN.localhost
-  DocumentRoot DOCUMENTROOT/DOMAIN
-</VirtualHost>
 <VirtualHost *:443>
   ServerName DOMAIN.localhost
   ServerAlias *.DOMAIN.localhost
