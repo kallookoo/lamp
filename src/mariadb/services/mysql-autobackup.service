@@ -1,0 +1,13 @@
+[Unit]
+Description=MySQL AutoBackup
+After=mariadb.service
+Requires=mariadb.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mysql-autobackup
+ExecStop=/usr/local/bin/mysql-autobackup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

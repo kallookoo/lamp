@@ -7,6 +7,8 @@ USER_BIN_DIR="${HOME}/.local/bin"
 
 DEFAULT_DOMAIN="$(hostname).localhost"
 USER_APACHE_DIR="${HOME}/Developer/www"
+USER_MYSQL_AUTOBACKUP_DIR="${HOME}/Developer/databases"
+
 PMA_LANG=es
 
 INSTALL_PACKAGES=(
@@ -66,16 +68,15 @@ function cmd_exists() {
 function apt_install() {
   local to_install=()
   echo "Checking if the packages is installed"
-  for x in "$@"; do
+  for x in "${@}"; do
     if ! cmd_exists $x; then
       ( LANG= apt-cache policy "$x" | grep -q 'Installed: (none)' ) && to_install+=($x);
     fi
   done; unset x
-  [ ${#to_install[@]} -ne 0 ] && (
+  if [[ ${#to_install[@]} -gt 0 ]]; then
     echo "Installing packages"
     sudo apt install -y --no-install-recommends ${to_install[@]}
-
-  )
+  fi
 }
 
 #
@@ -199,7 +200,7 @@ done
 # MARIADB SETUP
 echo "Installing MariaDB"
 sudo systemctl restart mariadb
-sudo rsync -azh "${SRC_PATH}/mariadb/" /etc/mysql/
+sudo cp -f "${SRC_PATH}/mariadb/conf.d/custom.cnf" /etc/mysql/conf.d/custom.cnf
 (
   echo "DROP DATABASE IF EXISTS test;"
   echo "DELETE FROM mysql.global_priv WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
@@ -208,7 +209,11 @@ sudo rsync -azh "${SRC_PATH}/mariadb/" /etc/mysql/
   echo -n "UPDATE mysql.global_priv SET priv=json_set(priv, '$.plugin', 'mysql_native_password', '$.authentication_string', PASSWORD('root'),"
   echo " '$.auth_or', json_array(json_object(), json_object('plugin', 'unix_socket'))) WHERE User='root';"
   echo " FLUSH PRIVILEGES;"
-) | sudo mysql -uroot
+) | sudo mysql
+sudo cp -f "${SRC_PATH}/mariadb/bin/mysql-autobackup" /usr/local/bin/mysql-autobackup
+sudo sed -i "s@USER_MYSQL_AUTOBACKUP_DIR@${USER_MYSQL_AUTOBACKUP_DIR}@" /usr/local/bin/mysql-autobackup
+sudo chmod +x /usr/local/bin/mysql-autobackup
+sudo cp -f "${SRC_PATH}/mariadb/services/mysql-autobackup.service" /lib/systemd/system/mysql-autobackup.service
 
 # PHPMYADMINSETUP
 echo "Installing phpMyAdmin"
@@ -296,12 +301,15 @@ fi
 YARN_INSTALLED="$(yarn global list)"
 for x in "${YARN_GLOBAL_PACKAGES_LIST[@]}"; do echo "${YARN_INSTALLED}" | grep -q "${x}" || yarn global add "${x}"; done; unset x
 
-
+# LAMP SERVICE
+echo "Lamp service"
+sudo cp -f "${SRC_PATH}/services/lamp.service" /lib/systemd/system/lamp.service
 
 # SERVER SERVICES
-echo "Server services"
+echo "Restarting server services"
 sudo systemctl daemon-reload
-sudo systemctl restart apache2 mariadb php7.4-fpm mailhog
+sudo systemctl restart lamp
+sudo systemctl disable apache2 mariadb php7.4-fpm postfix mailhog mysql-autobackup &>/dev/null
 
 # APACHE USER
 if ! groups | grep -q "www-data"; then

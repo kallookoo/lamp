@@ -1,0 +1,35 @@
+#!/bin/bash
+
+MYSQL_BACKUP_DIR="USER_MYSQL_AUTOBACKUP_DIR"
+CURRENT_DATE="$(date +%d%m%Y)"
+
+if [[ $(id -u) -ne 0 ]]; then
+  echo "Usage: sudo mysql-autobackup"
+  exit
+fi
+
+[ -d "${MYSQL_BACKUP_DIR}" ] || (
+  mkdir -p "${MYSQL_BACKUP_DIR}"
+  chown -R www-data:www-data "${MYSQL_BACKUP_DIR}"
+  chmod 775 "${MYSQL_BACKUP_DIR}"
+  chmod g+s "${MYSQL_BACKUP_DIR}"
+)
+
+(
+  [ -d "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}" ] || mkdir "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}"
+  mysql --silent -e "show databases;" | \
+    grep -vE '^((information|performance)_schema|mysql|phpmyadmin)$' | \
+    while read DATABASE; do
+      if [[ ! -f "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}/${DATABASE}.sql" ]]; then
+        mysqldump --add-drop-database --databases "${DATABASE}" > "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}/${DATABASE}.sql"
+        STATUS=$?
+      fi
+    done
+  chown -R www-data "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}"
+  chmod 775 "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}"
+  find "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}" -type f -exec chmod 664 {} \;
+  [ ${STATUS:-0} -eq 0 ] && (
+    find "${MYSQL_BACKUP_DIR}/" -mindepth 1 -maxdepth 1 -mtime +7 -type d -exec rm -rf {} \;
+  )
+)
+exit

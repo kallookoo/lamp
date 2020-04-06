@@ -1,0 +1,11 @@
+[Unit]
+Description=Lamp services
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemctl restart apache2 mariadb php7.4-fpm postfix mailhog mysql-autobackup
+ExecStop=/bin/systemctl stop apache2 mariadb php7.4-fpm postfix mailhog mysql-autobackup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
