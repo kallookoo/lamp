@@ -5,11 +5,13 @@ SRC_PATH="${SETUP_PATH}/src"
 
 USER_BIN_DIR="${HOME}/.local/bin"
 
-DEFAULT_DOMAIN="$(hostname).localhost"
+DEFAULT_DOMAIN="ubuntu.localhost"
 USER_APACHE_DIR="${HOME}/Developer/www"
 USER_MYSQL_AUTOBACKUP_DIR="${HOME}/Developer/databases"
 
 PMA_LANG=es
+
+MARIADB_VERSION="10.5"
 
 INSTALL_PACKAGES=(
   git
@@ -34,13 +36,16 @@ INSTALL_PACKAGES=(
   php7.4-mysql # phpMyAdmin
   php7.4-zip # phpMyAdmin
 
-  php7.4-xml # PHP_CodeSniffer
+  php7.4-xml # PHP_CodeSniffer and WordPress
 
   php-imagick
   php-pear
   php-php-gettext
   php-xdebug
+  ghostscript # Ghostscript is required for rendering PDF previews (WordPress)
 )
+
+NODE_LTS="12"
 
 YARN_GLOBAL_PACKAGES_LIST=(
   clean-css-cli
@@ -87,10 +92,12 @@ sudo -p "Sudo session, enter password: " echo -n ""
 
 # REQUIRED PACKAGES
 echo "Installing basic packages"
-apt_install curl wget pwgen apt-transport-https gnupg rsync &>/dev/null
+apt_install curl wget pwgen apt-transport-https gnupg rsync lsb-release &>/dev/null
 
 # REPOSITORIES SETUP
+CODENAME="$(lsb_release -sc)"
 REQUIRE_UPDATE=1
+
 echo "Adding repositories"
 PPA_REPOSITORIES=( "git-core/ppa" "ondrej/apache2" "ondrej/php" )
 for x in "${PPA_REPOSITORIES[@]}"; do
@@ -99,20 +106,25 @@ for x in "${PPA_REPOSITORIES[@]}"; do
     REQUIRE_UPDATE=0
   )
 done; unset x
-if [[ ! -f /etc/apt/sources.list.d/mariadb.list ]]; then
+
+
+if [[ ! -f "/etc/apt/sources.list.d/mariadb-${MARIADB_VERSION}.list" ]]; then
   sudo apt-key adv --fetch-keys "https://mariadb.org/mariadb_release_signing_key.asc"
   (
-    echo "deb [arch=amd64,arm64,ppc64el] http://ams2.mirrors.digitalocean.com/mariadb/repo/10.4/ubuntu bionic main"
-    echo "# deb-src http://ams2.mirrors.digitalocean.com/mariadb/repo/10.4/ubuntu bionic main"
-  ) | sudo tee /etc/apt/sources.list.d/mariadb.list &>/dev/null
+    echo "deb [arch=amd64,arm64,ppc64el] http://ams2.mirrors.digitalocean.com/mariadb/repo/${MARIADB_VERSION}/ubuntu ${CODENAME} main"
+    echo "# deb-src http://ams2.mirrors.digitalocean.com/mariadb/repo/${MARIADB_VERSION}/ubuntu ${CODENAME} main"
+  ) | sudo tee "/etc/apt/sources.list.d/mariadb-${MARIADB_VERSION}.list" &>/dev/null
+  find /etc/apt/sources.list.d/ -iname "*mariadb*" -not -iname "*mariadb-${MARIADB_VERSION}*"
   REQUIRE_UPDATE=0
 fi
-if [[ ! -f /etc/apt/sources.list.d/nodesource.list ]]; then
+
+if [[ ! -f "/etc/apt/sources.list.d/nodesource-${NODE_LTS}.list" ]]; then
   curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add - &>/dev/null
   (
-    echo "deb https://deb.nodesource.com/node_12.x bionic main"
-    echo "# deb-src https://deb.nodesource.com/node_12.x bionic main"
-  ) | sudo tee /etc/apt/sources.list.d/nodesource.list &>/dev/null
+    echo "deb https://deb.nodesource.com/node_${NODE_LTS}.x ${CODENAME} main"
+    echo "# deb-src https://deb.nodesource.com/node_${NODE_LTS}.x ${CODENAME} main"
+  ) | sudo tee "/etc/apt/sources.list.d/nodesource-${NODE_LTS}.list" &>/dev/null
+  find /etc/apt/sources.list.d/ -iname "*nodesource*" -not -iname "*nodesource-${NODE_LTS}*"
   REQUIRE_UPDATE=0
 fi
 if [[ ! -f /etc/apt/sources.list.d/yarn.list ]]; then
@@ -165,7 +177,7 @@ sudo sed -i "s@VIRTUALHOSTS_DIR@${USER_APACHE_DIR}@g" /etc/apache2/apache2.conf
 rsync -azh "${SRC_PATH}/apache/bin/" "${USER_BIN_DIR}/"
 sed -i "s@DOCUMENTROOT@${USER_APACHE_DIR}@g" "${USER_BIN_DIR}/a2v"
 chmod +x -R "${USER_BIN_DIR}/"
-a2c -i "${DEFAULT_DOMAIN}" &>/dev/null
+a2c -i "${DEFAULT_DOMAIN}"
 [ -d "${USER_APACHE_DIR}" ] || mkdir -p "${USER_APACHE_DIR}"
 sudo find "${USER_APACHE_DIR}" -type f -exec chmod 644 {} \;
 sudo find "${USER_APACHE_DIR}" -type d -exec chmod 755 {} \;
