@@ -212,7 +212,7 @@ done
 # MARIADB SETUP
 echo "Installing MariaDB"
 sudo systemctl restart mariadb
-sudo cp -f "${SRC_PATH}/mariadb/conf.d/custom.cnf" /etc/mysql/conf.d/custom.cnf
+sudo cp -f "${SRC_PATH}/mariadb/conf.d/90-custom.cnf" /etc/mysql/mariadb.conf.d/90-custom.cnf
 (
   echo "DROP DATABASE IF EXISTS test;"
   echo "DELETE FROM mysql.global_priv WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
@@ -269,7 +269,6 @@ if ! cmd_exists composer; then
   if [[ -f "$HOME/.composer/composer.json" ]]; then
     composer global update
   fi
-  grep -q "alias com=" "${HOME}/.bashrc" || echo 'alias com="composer"' >> "${HOME}/.bashrc"
 fi
 
 # WP CLI SETUP
