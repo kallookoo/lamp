@@ -275,7 +275,6 @@ fi
 echo "Installing WP CLI"
 if ! cmd_exists wp; then
   wget -q https://raw.github.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -O "${USER_BIN_DIR}/wp"
-  chmod +x "${USER_BIN_DIR}/wp"
 fi
 
 # PHP_CODESNIFFER
@@ -283,7 +282,6 @@ echo "Installing PHP_CodeSniffer"
 for x in phpcs phpcbf; do
   if ! cmd_exists "${x}"; then
     wget -q https://squizlabs.github.io/PHP_CodeSniffer/${x}.phar -O "${USER_BIN_DIR}/${x}"
-    chmod +x "${USER_BIN_DIR}/${x}"
   fi
 done; unset x
 
@@ -291,14 +289,12 @@ done; unset x
 echo "Installing PHPMD"
 if ! cmd_exists phpmd; then
   wget -q https://phpmd.org/static/latest/phpmd.phar -O "${USER_BIN_DIR}/phpmd"
-  chmod +x "${USER_BIN_DIR}/phpmd"
 fi
 
 # PHP-CS-FIXER
 echo "Installing php-cs-fixer"
 if ! cmd_exists php-cs-fixer; then
   wget -q https://cs.symfony.com/download/php-cs-fixer-v2.phar -O "${USER_BIN_DIR}/php-cs-fixer"
-  chmod +x "${USER_BIN_DIR}/php-cs-fixer"
 fi
 
 # YARN SETUP
@@ -322,8 +318,14 @@ sudo systemctl daemon-reload
 sudo systemctl restart lamp
 sudo systemctl disable apache2 mariadb php7.4-fpm postfix mailhog mysql-autobackup &>/dev/null
 
+# LAMP COMMAND
+cp -f "${SRC_PATH}/bin/lamp" "${USER_BIN_DIR}/lamp"
+chmod +x "${USER_BIN_DIR}/lamp"
+
+
 # APACHE USER
 if ! groups | grep -q "www-data"; then
   sudo usermod -aG www-data "${USER}"
   echo "REQUIRED REBOOT THIS SYSTEM"
 fi
+

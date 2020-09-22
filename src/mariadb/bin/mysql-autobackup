@@ -29,7 +29,10 @@ fi
   chmod 775 "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}"
   find "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}" -type f -exec chmod 664 {} \;
   [ ${STATUS:-0} -eq 0 ] && (
-    find "${MYSQL_BACKUP_DIR}/" -mindepth 1 -maxdepth 1 -mtime +7 -type d -exec rm -rf {} \;
+    if [[ `ls ${MYSQL_BACKUP_DIR} | grep -cE ".+"` -gt 1 ]]; then
+      find "${MYSQL_BACKUP_DIR}/" -mindepth 1 -maxdepth 1 -mtime +7 -type d -exec rm -rf {} \;
+    fi
+
   )
 )
 exit
