@@ -15,7 +15,6 @@ MARIADB_VERSION="10.5"
 
 INSTALL_PACKAGES=(
   git
-  git-extras
   git-lfs
   subversion
   nodejs
@@ -181,8 +180,8 @@ a2c -i "${DEFAULT_DOMAIN}"
 [ -d "${USER_APACHE_DIR}" ] || mkdir -p "${USER_APACHE_DIR}"
 sudo find "${USER_APACHE_DIR}" -type f -exec chmod 644 {} \;
 sudo find "${USER_APACHE_DIR}" -type d -exec chmod 755 {} \;
-sudo chown -R "$USER:www-data" "${USER_APACHE_DIR}"
-sudo chmod g+s "${USER_APACHE_DIR}"
+# sudo chown -R "$USER:www-data" "${USER_APACHE_DIR}"
+# sudo chmod g+s "${USER_APACHE_DIR}"
 
 # PHP SETUP
 echo "Installing PHP"
@@ -324,8 +323,8 @@ chmod +x "${USER_BIN_DIR}/lamp"
 
 
 # APACHE USER
-if ! groups | grep -q "www-data"; then
-  sudo usermod -aG www-data "${USER}"
-  echo "REQUIRED REBOOT THIS SYSTEM"
-fi
+# if ! groups | grep -q "www-data"; then
+#   sudo usermod -aG www-data "${USER}"
+#   echo "REQUIRED REBOOT THIS SYSTEM"
+# fi
 
