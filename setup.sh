@@ -145,15 +145,15 @@ echo postfix postfix/mailname string ${DEFAULT_DOMAIN} | sudo debconf-set-select
 apt_install ${INSTALL_PACKAGES[@]}
 
 # MKCERT SETUP
-echo "Installing mkcert"
-if ! cmd_exists mkcert; then
-  sudo wget -q `github_download_url "FiloSottile/mkcert" "linux-amd64"` -O "/usr/local/bin/mkcert"
-  sudo chmod +x "/usr/local/bin/mkcert"
-  mkcert -install
-fi
+cmd_exists mkcert && echo -n "Updating" || echo -n "Installing"
+echo " mkcert"
+sudo wget -q `github_download_url "FiloSottile/mkcert" "linux-amd64"` -O "/usr/local/bin/mkcert"
+sudo chmod +x "/usr/local/bin/mkcert"
+[ -d "${HOME}/.local/share/mkcert" ] || mkcert -install
 
 # APACHE SETUP
-echo "Installing Apache"
+cmd_exists apache2ctl && echo -n "Updating" || echo -n "Installing"
+echo " Apache"
 MODULES=(
   headers
   rewrite
@@ -176,15 +176,14 @@ sudo sed -i "s@VIRTUALHOSTS_DIR@${USER_APACHE_DIR}@g" /etc/apache2/apache2.conf
 rsync -azh "${SRC_PATH}/apache/bin/" "${USER_BIN_DIR}/"
 sed -i "s@DOCUMENTROOT@${USER_APACHE_DIR}@g" "${USER_BIN_DIR}/a2v"
 chmod +x -R "${USER_BIN_DIR}/"
-a2c -i "${DEFAULT_DOMAIN}"
+a2c -i "${DEFAULT_DOMAIN}" &>/dev/null
 [ -d "${USER_APACHE_DIR}" ] || mkdir -p "${USER_APACHE_DIR}"
 sudo find "${USER_APACHE_DIR}" -type f -exec chmod 644 {} \;
 sudo find "${USER_APACHE_DIR}" -type d -exec chmod 755 {} \;
-# sudo chown -R "$USER:www-data" "${USER_APACHE_DIR}"
-# sudo chmod g+s "${USER_APACHE_DIR}"
 
 # PHP SETUP
-echo "Installing PHP"
+cmd_exists php && echo -n "Updating" || echo -n "Installing"
+echo " PHP"
 (
   echo "<?php phpinfo();"
 ) | sudo tee /var/www/html/info.php &>/dev/null
@@ -209,9 +208,10 @@ for php_version in $(ls /etc/php); do
 done
 
 # MARIADB SETUP
-echo "Installing MariaDB"
-sudo systemctl restart mariadb
+cmd_exists mysql && echo -n "Updating" || echo -n "Installing"
+echo " MariaDB"
 sudo cp -f "${SRC_PATH}/mariadb/conf.d/90-custom.cnf" /etc/mysql/mariadb.conf.d/90-custom.cnf
+sudo systemctl restart mariadb
 (
   echo "DROP DATABASE IF EXISTS test;"
   echo "DELETE FROM mysql.global_priv WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
@@ -227,12 +227,12 @@ sudo chmod +x /usr/local/bin/mysql-autobackup
 sudo cp -f "${SRC_PATH}/mariadb/services/mysql-autobackup.service" /lib/systemd/system/mysql-autobackup.service
 
 # PHPMYADMINSETUP
-echo "Installing phpMyAdmin"
+sudo cp -f "${SRC_PATH}/phpmyadmin/phpmyadmin.sh" /etc/cron.monthly/phpmyadmin.sh
+sudo sed -i "s/PMA_LANG/${PMA_LANG}/" /etc/cron.monthly/phpmyadmin.sh
+sudo chmod +x /etc/cron.monthly/phpmyadmin.sh
 if [[ ! -d /var/www/html/phpmyadmin ]]; then
+  echo "Installing phpMyAdmin"
   PMA_PASSWORD=`pwgen -svB 16 1`
-  sudo cp -f "${SRC_PATH}/phpmyadmin/phpmyadmin.sh" /etc/cron.monthly/phpmyadmin.sh
-  sudo sed -i "s/PMA_LANG/${PMA_LANG}/" /etc/cron.monthly/phpmyadmin.sh
-  sudo chmod +x /etc/cron.monthly/phpmyadmin.sh
   sudo bash /etc/cron.monthly/phpmyadmin.sh
   (
     echo "CREATE DATABASE IF NOT EXISTS phpmyadmin DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;"
@@ -245,86 +245,85 @@ if [[ ! -d /var/www/html/phpmyadmin ]]; then
   sudo rm -rf /var/www/html/phpmyadmin/sql
   sudo cp -f "${SRC_PATH}/phpmyadmin/config.inc.php" /var/www/html/phpmyadmin/config.inc.php
   sudo sed -i "s/pmapass/${PMA_PASSWORD}/" /var/www/html/phpmyadmin/config.inc.php
+else
+  echo "Updating phpMyAdmin"
+  sudo bash /etc/cron.monthly/phpmyadmin.sh
 fi
 
 # MAILHOG
-echo "Installing MailHog"
-if ! cmd_exists mhsendmail; then
-  sudo wget -q https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64 -O /usr/local/bin/mhsendmail
-  sudo chmod +x /usr/local/bin/mhsendmail
-fi
-if ! cmd_exists mailhog; then
-  sudo wget -q https://github.com/mailhog/MailHog/releases/download/v1.0.0/MailHog_linux_amd64 -O /usr/local/bin/mailhog
-  sudo chmod +x /usr/local/bin/mailhog
-fi
+( cmd_exists mhsendmail && cmd_exists mailhog ) && echo -n "Updating" || echo -n "Installing"
+echo " MailHog"
+sudo systemctl stop mailhog &>/dev/null
+sudo wget -q https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64 -O /usr/local/bin/mhsendmail
+sudo chmod +x /usr/local/bin/mhsendmail
+sudo wget -q https://github.com/mailhog/MailHog/releases/download/v1.0.0/MailHog_linux_amd64 -O /usr/local/bin/mailhog
+sudo chmod +x /usr/local/bin/mailhog
 sudo cp -f "${SRC_PATH}/mailhog/mailhog.service" /lib/systemd/system/mailhog.service
 sudo sed -i "s/DEFAULT_DOMAIN/${DEFAULT_DOMAIN}/" /lib/systemd/system/mailhog.service
 
 # COMPOSER SETUP
-echo "Installing composer"
-if ! cmd_exists composer; then
-  wget -q `github_download_url "composer/composer" "composer.phar"` -O "${USER_BIN_DIR}/composer"
-  chmod +x "${USER_BIN_DIR}/composer"
-  if [[ -f "$HOME/.composer/composer.json" ]]; then
-    composer global update
-  fi
-fi
+cmd_exists composer && echo -n "Updating" || echo -n "Installing"
+echo " composer"
+wget -q `github_download_url "composer/composer" "composer.phar"` -O "${USER_BIN_DIR}/composer"
+chmod +x "${USER_BIN_DIR}/composer"
+[ -f "$HOME/.composer/composer.json" ] && composer global update
 
 # WP CLI SETUP
-echo "Installing WP CLI"
-if ! cmd_exists wp; then
-  wget -q https://raw.github.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -O "${USER_BIN_DIR}/wp"
-fi
+cmd_exists wp && echo -n "Updating" || echo -n "Installing"
+echo " WP CLI"
+wget -q https://raw.github.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -O "${USER_BIN_DIR}/wp"
 
 # PHP_CODESNIFFER
-echo "Installing PHP_CodeSniffer"
+( cmd_exists phpcs && cmd_exists phpcbf ) && echo -n "Updating" || echo -n "Installing"
+echo " PHP_CodeSniffer"
 for x in phpcs phpcbf; do
-  if ! cmd_exists "${x}"; then
-    wget -q https://squizlabs.github.io/PHP_CodeSniffer/${x}.phar -O "${USER_BIN_DIR}/${x}"
-  fi
+wget -q https://squizlabs.github.io/PHP_CodeSniffer/${x}.phar -O "${USER_BIN_DIR}/${x}"
 done; unset x
 
 # PHPMD
-echo "Installing PHPMD"
-if ! cmd_exists phpmd; then
-  wget -q https://phpmd.org/static/latest/phpmd.phar -O "${USER_BIN_DIR}/phpmd"
-fi
+cmd_exists phpmd && echo -n "Updating" || echo -n "Installing"
+echo " PHPMD"
+wget -q https://phpmd.org/static/latest/phpmd.phar -O "${USER_BIN_DIR}/phpmd"
 
 # PHP-CS-FIXER
-echo "Installing php-cs-fixer"
-if ! cmd_exists php-cs-fixer; then
-  wget -q https://cs.symfony.com/download/php-cs-fixer-v2.phar -O "${USER_BIN_DIR}/php-cs-fixer"
-fi
+cmd_exists php-cs-fixer && echo -n "Updating" || echo -n "Installing"
+echo " php-cs-fixer"
+wget -q https://cs.symfony.com/download/php-cs-fixer-v2.phar -O "${USER_BIN_DIR}/php-cs-fixer"
 
 # YARN SETUP
-echo "Installing Yarn"
 if [[ ! -f "$HOME/.yarnrc" ]]; then
-  yarn config set prefix "$HOME/.local"
-  yarn config set child-concurrency 1
-  yarn config set yarn-offline-mirror-pruning true
+  echo "Installing Yarn"
+  yarn config set prefix "$HOME/.local" --silent
+  yarn config set child-concurrency 1 --silent
+  yarn config set yarn-offline-mirror-pruning true --silent
+else
+  echo "Updating Yarn"
 fi
 
-YARN_INSTALLED="$(yarn global list)"
-for x in "${YARN_GLOBAL_PACKAGES_LIST[@]}"; do echo "${YARN_INSTALLED}" | grep -q "${x}" || yarn global add "${x}"; done; unset x
+YARN_INSTALLED="$(yarn global list | grep -vE 'yarn global|Done')"
+[ -n "${YARN_INSTALLED}" ] && echo -n "Updating" || echo -n "Installing"
+echo " Yarn Global Packages"
+for x in "${YARN_GLOBAL_PACKAGES_LIST[@]}"; do
+  echo "${YARN_INSTALLED}" | grep -q "${x}" && yarn global remove "${x}" --silent
+  yarn global add "${x}" --silent
+done; unset x
 
 # LAMP SERVICE
-echo "Lamp service"
+[ -f /lib/systemd/system/lamp.service ] && echo -n "Updating" || echo -n "Installing"
+echo " Lamp service"
 sudo cp -f "${SRC_PATH}/services/lamp.service" /lib/systemd/system/lamp.service
 
 # SERVER SERVICES
-echo "Restarting server services"
 sudo systemctl daemon-reload
+echo "Disabling lamp services"
+sudo systemctl disable lamp apache2 mariadb php7.4-fpm postfix mailhog mysql-autobackup &>/dev/null
+echo "Restarting lamp service"
 sudo systemctl restart lamp
-sudo systemctl disable apache2 mariadb php7.4-fpm postfix mailhog mysql-autobackup &>/dev/null
+echo "Stopping lamp service"
+sudo systemctl stop lamp
 
 # LAMP COMMAND
+[ -f "${USER_BIN_DIR}/lamp" ] && echo -n "Updating" || echo -n "Installing"
+echo " Lamp command, alias of the sudo systemctl lamp"
 cp -f "${SRC_PATH}/bin/lamp" "${USER_BIN_DIR}/lamp"
 chmod +x "${USER_BIN_DIR}/lamp"
-
-
-# APACHE USER
-# if ! groups | grep -q "www-data"; then
-#   sudo usermod -aG www-data "${USER}"
-#   echo "REQUIRED REBOOT THIS SYSTEM"
-# fi
-
