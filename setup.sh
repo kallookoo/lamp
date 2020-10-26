@@ -42,6 +42,7 @@ INSTALL_PACKAGES=(
   php-php-gettext
   php-xdebug
   ghostscript # Ghostscript is required for rendering PDF previews (WordPress)
+  libnss-myhostname # Add support for domain like *.localhost
 )
 
 NODE_LTS="12"
@@ -86,8 +87,6 @@ function apt_install() {
 #
 # SETUP
 #
-
-sudo -p "Sudo session, enter password: " echo -n ""
 
 # REQUIRED PACKAGES
 echo "Installing basic packages"
@@ -176,7 +175,7 @@ sudo sed -i "s@VIRTUALHOSTS_DIR@${USER_APACHE_DIR}@g" /etc/apache2/apache2.conf
 rsync -azh "${SRC_PATH}/apache/bin/" "${USER_BIN_DIR}/"
 sed -i "s@DOCUMENTROOT@${USER_APACHE_DIR}@g" "${USER_BIN_DIR}/a2v"
 chmod +x -R "${USER_BIN_DIR}/"
-a2c -i "${DEFAULT_DOMAIN}" &>/dev/null
+"${USER_BIN_DIR}/a2c" -i "${DEFAULT_DOMAIN}" &>/dev/null
 [ -d "${USER_APACHE_DIR}" ] || mkdir -p "${USER_APACHE_DIR}"
 sudo find "${USER_APACHE_DIR}" -type f -exec chmod 644 {} \;
 sudo find "${USER_APACHE_DIR}" -type d -exec chmod 755 {} \;
@@ -223,10 +222,12 @@ sudo systemctl restart mariadb
 ) | sudo mysql
 sudo cp -f "${SRC_PATH}/mariadb/bin/mysql-autobackup" /usr/local/bin/mysql-autobackup
 sudo sed -i "s@USER_MYSQL_AUTOBACKUP_DIR@${USER_MYSQL_AUTOBACKUP_DIR}@" /usr/local/bin/mysql-autobackup
+sudo sed -i "s/CURRENT_USER/${USER}/" /usr/local/bin/mysql-autobackup
 sudo chmod +x /usr/local/bin/mysql-autobackup
 sudo cp -f "${SRC_PATH}/mariadb/services/mysql-autobackup.service" /lib/systemd/system/mysql-autobackup.service
 
-# PHPMYADMINSETUP
+
+# PHPMYADMIN SETUP
 sudo cp -f "${SRC_PATH}/phpmyadmin/phpmyadmin.sh" /etc/cron.monthly/phpmyadmin.sh
 sudo sed -i "s/PMA_LANG/${PMA_LANG}/" /etc/cron.monthly/phpmyadmin.sh
 sudo chmod +x /etc/cron.monthly/phpmyadmin.sh
@@ -254,9 +255,9 @@ fi
 ( cmd_exists mhsendmail && cmd_exists mailhog ) && echo -n "Updating" || echo -n "Installing"
 echo " MailHog"
 sudo systemctl stop mailhog &>/dev/null
-sudo wget -q https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64 -O /usr/local/bin/mhsendmail
+sudo wget -q `github_download_url "mailhog/mhsendmail" "_linux_amd64"` -O /usr/local/bin/mhsendmail
 sudo chmod +x /usr/local/bin/mhsendmail
-sudo wget -q https://github.com/mailhog/MailHog/releases/download/v1.0.0/MailHog_linux_amd64 -O /usr/local/bin/mailhog
+sudo wget -q `github_download_url "mailhog/MailHog" "_linux_amd64"` -O /usr/local/bin/mailhog
 sudo chmod +x /usr/local/bin/mailhog
 sudo cp -f "${SRC_PATH}/mailhog/mailhog.service" /lib/systemd/system/mailhog.service
 sudo sed -i "s/DEFAULT_DOMAIN/${DEFAULT_DOMAIN}/" /lib/systemd/system/mailhog.service
@@ -266,7 +267,7 @@ cmd_exists composer && echo -n "Updating" || echo -n "Installing"
 echo " composer"
 wget -q `github_download_url "composer/composer" "composer.phar"` -O "${USER_BIN_DIR}/composer"
 chmod +x "${USER_BIN_DIR}/composer"
-[ -f "$HOME/.composer/composer.json" ] && composer global update
+[ -f "$HOME/.composer/composer.json" ] && "${USER_BIN_DIR}/composer" global update
 
 # WP CLI SETUP
 cmd_exists wp && echo -n "Updating" || echo -n "Installing"
@@ -327,3 +328,6 @@ sudo systemctl stop lamp
 echo " Lamp command, alias of the sudo systemctl lamp"
 cp -f "${SRC_PATH}/bin/lamp" "${USER_BIN_DIR}/lamp"
 chmod +x "${USER_BIN_DIR}/lamp"
+if ! cmd_exists lamp; then
+  echo "The ${USER_BIN_DIR} not exists in PATH"
+fi

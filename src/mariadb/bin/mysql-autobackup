@@ -1,38 +1,73 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-MYSQL_BACKUP_DIR="USER_MYSQL_AUTOBACKUP_DIR"
-CURRENT_DATE="$(date +%d%m%Y)"
-
-if [[ $(id -u) -ne 0 ]]; then
-  echo "Usage: sudo mysql-autobackup"
+if [[ $(id -u) -ne 0 ]] || [[ -z "$(pgrep mariadb)" ]]; then
   exit
 fi
 
-[ -d "${MYSQL_BACKUP_DIR}" ] || (
-  mkdir -p "${MYSQL_BACKUP_DIR}"
-  chown -R www-data:www-data "${MYSQL_BACKUP_DIR}"
-  chmod 775 "${MYSQL_BACKUP_DIR}"
-  chmod g+s "${MYSQL_BACKUP_DIR}"
-)
+function get_databases() {
+  mysql -se "show databases;" | grep -vE '^((information|performance)_schema|mysql|phpmyadmin)$' | \
+    while read database; do echo "${database}"; done; unset database
+}
 
-(
-  [ -d "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}" ] || mkdir "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}"
-  mysql --silent -e "show databases;" | \
-    grep -vE '^((information|performance)_schema|mysql|phpmyadmin)$' | \
-    while read DATABASE; do
-      if [[ ! -f "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}/${DATABASE}.sql" ]]; then
-        mysqldump --add-drop-database --databases "${DATABASE}" > "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}/${DATABASE}.sql"
-        STATUS=$?
-      fi
-    done
-  chown -R www-data "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}"
-  chmod 775 "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}"
-  find "${MYSQL_BACKUP_DIR}/${CURRENT_DATE}" -type f -exec chmod 664 {} \;
-  [ ${STATUS:-0} -eq 0 ] && (
-    if [[ `ls ${MYSQL_BACKUP_DIR} | grep -cE ".+"` -gt 1 ]]; then
-      find "${MYSQL_BACKUP_DIR}/" -mindepth 1 -maxdepth 1 -mtime +7 -type d -exec rm -rf {} \;
+function create_dump() {
+  local fn="${1}/${2}.sql"
+  [ -f "${fn}.gz" ] && return 1
+  mysqldump --skip-dump-date --add-drop-database --databases "${2}" --result-file="${fn}"
+  [ $? -eq 0 ] && return 0
+  rm -f "${fn}"
+  return 2
+}
+
+function remove_backups() {
+  local ag="$(date +%s --date='30 day ago')"
+  [ -d "${BACKUP_DIR}/stale" ] && \
+    find "${BACKUP_DIR}/stale" -name "${1}.*" | \
+    while read fn; do
+      [ `echo "${fn}" | grep -oE '\.[0-9]{10}\.' | tr -d '.'` -lt ${ag} ] && rm -f "${fn}"
+    done; unset fn
+}
+
+function create_manifest() {
+  echo "${1} $(date +%s) $(md5sum ${BACKUP_DIR}/${1}.sql | awk '{print $1}')" >> "${MANIFEST}"
+  gzip -9 "${BACKUP_DIR}/${1}.sql"
+}
+
+function update_manifest() {
+  create_dump /tmp "${1}"
+  if [[ $? -eq 0 ]]; then
+    local a=(`grep -oE "${1}.*" "${MANIFEST}"`)
+    local b=( "${1}" "$(date +%s)" "$(md5sum "/tmp/${1}.sql" | awk '{print $1}')")
+    if [[ ${#a[@]} -eq 3 ]] && [[ ${#b[@]} -eq 3 ]] && [[ "${a[2]}" != "${b[2]}" ]]; then
+      gzip -9 "/tmp/${1}.sql" && \
+        mkdir "${BACKUP_DIR}/stale" && \
+        mv "${BACKUP_DIR}/${1}.sql.gz" "${BACKUP_DIR}/stale/${1}.${a[1]}.sql.gz" && \
+        mv "/tmp/${1}.sql.gz" "${BACKUP_DIR}/${1}.sql.gz" && \
+        sed -i -e "s/${a[1]}/${b[1]}/" -e "s/${a[2]}/${b[2]}/" "${MANIFEST}"
     fi
+  fi
+  find /tmp -name "${1}.*" -exec rm -f {} \;
+}
 
-  )
-)
+function create_backup() {
+  create_dump "${BACKUP_DIR}" "${1}"
+  case "$?" in
+    "0" ) create_manifest "${1}" ;;
+    "1" ) update_manifest "${1}" ;;
+  esac
+  remove_backups "${1}"
+}
+
+BACKUP_DIR="USER_MYSQL_AUTOBACKUP_DIR"
+MANIFEST="${BACKUP_DIR}/manifest"
+DATABASES=(`get_databases`)
+OWNER=CURRENT_USER
+
+if [[ ${#DATABASES[@]} -gt 0 ]]; then
+  [ -d "${BACKUP_DIR}" ] || mkdir "${BACKUP_DIR}"
+  [ -f "${MANIFEST}" ] || touch "${MANIFEST}"
+  for db in "${DATABASES[@]}"; do create_backup "${db}"; done; unset db
+  chown -R ${OWNER}:${OWNER} "${BACKUP_DIR}"
+fi
+
+unset BACKUP_DIR MANIFEST DATABASES OWNER
 exit
