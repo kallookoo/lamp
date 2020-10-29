@@ -62,7 +62,7 @@ YARN_GLOBAL_PACKAGES_LIST=(
 #
 
 function github_download_url() {
-  curl -s "https://api.github.com/repos/${1}/releases/latest" | grep "browser_download_url.*${2}" | cut -d '"' -f 4
+  curl -s "https://api.github.com/repos/${1}/releases/latest" | grep -m 1 "browser_download_url.*${2}" | cut -d '"' -f 4
 }
 
 function cmd_exists() {
