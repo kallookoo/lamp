@@ -14,11 +14,6 @@ PMA_LANG=es
 MARIADB_VERSION="10.5"
 
 INSTALL_PACKAGES=(
-  git
-  git-lfs
-  subversion
-  nodejs
-  yarn
   imagemagick
   libnss3-tools # mkcert
 
@@ -26,35 +21,21 @@ INSTALL_PACKAGES=(
   apache2
   mariadb-server
   postfix
+
   php7.4-fpm
   php7.4-bz2 # PHAR
-
   php7.4-curl # phpMyAdmin
   php7.4-gd # phpMyAdmin
   php7.4-mbstring # phpMyAdmin
   php7.4-mysql # phpMyAdmin
   php7.4-zip # phpMyAdmin
-
   php7.4-xml # PHP_CodeSniffer and WordPress
 
   php-imagick
   php-pear
-  php-php-gettext
   php-xdebug
   ghostscript # Ghostscript is required for rendering PDF previews (WordPress)
   libnss-myhostname # Add support for domain like *.localhost
-)
-
-NODE_LTS="12"
-
-YARN_GLOBAL_PACKAGES_LIST=(
-  clean-css-cli
-  html-minifier
-  js-beautify
-  minjson
-  svgo
-  uglify-js
-  uglifycss
 )
 
 #
@@ -62,7 +43,7 @@ YARN_GLOBAL_PACKAGES_LIST=(
 #
 
 function github_download_url() {
-  curl -s "https://api.github.com/repos/${1}/releases/latest" | grep -m 1 "browser_download_url.*${2}" | cut -d '"' -f 4
+  curl -sN "https://api.github.com/repos/${1}/releases/latest" | grep -m 1 "browser_download_url.*${2}" | cut -d '"' -f 4
 }
 
 function cmd_exists() {
@@ -97,7 +78,7 @@ CODENAME="$(lsb_release -sc)"
 REQUIRE_UPDATE=1
 
 echo "Adding repositories"
-PPA_REPOSITORIES=( "git-core/ppa" "ondrej/apache2" "ondrej/php" )
+PPA_REPOSITORIES=( "ondrej/apache2" "ondrej/php" )
 for x in "${PPA_REPOSITORIES[@]}"; do
   grep -q "^deb.*${x}" /etc/apt/sources.list.d/*.list || (
     sudo add-apt-repository -y --no-update "ppa:${x}" &>/dev/null
@@ -116,23 +97,6 @@ if [[ ! -f "/etc/apt/sources.list.d/mariadb-${MARIADB_VERSION}.list" ]]; then
   REQUIRE_UPDATE=0
 fi
 
-if [[ ! -f "/etc/apt/sources.list.d/nodesource-${NODE_LTS}.list" ]]; then
-  curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add - &>/dev/null
-  (
-    echo "deb https://deb.nodesource.com/node_${NODE_LTS}.x ${CODENAME} main"
-    echo "# deb-src https://deb.nodesource.com/node_${NODE_LTS}.x ${CODENAME} main"
-  ) | sudo tee "/etc/apt/sources.list.d/nodesource-${NODE_LTS}.list" &>/dev/null
-  find /etc/apt/sources.list.d/ -iname "*nodesource*" -not -iname "*nodesource-${NODE_LTS}*"
-  REQUIRE_UPDATE=0
-fi
-if [[ ! -f /etc/apt/sources.list.d/yarn.list ]]; then
-  curl -s https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - &>/dev/null
-  (
-    echo "deb https://dl.yarnpkg.com/debian/ stable main"
-  ) | sudo tee /etc/apt/sources.list.d/yarn.list &>/dev/null
-  REQUIRE_UPDATE=0
-fi
-
 [ $REQUIRE_UPDATE -eq 0 ] && (
   echo "Updating system"
   sudo apt update 2>&1 | grep -q "list-upgrade" && sudo apt -y upgrade
@@ -146,8 +110,8 @@ apt_install ${INSTALL_PACKAGES[@]}
 # MKCERT SETUP
 cmd_exists mkcert && echo -n "Updating" || echo -n "Installing"
 echo " mkcert"
-sudo wget -q `github_download_url "FiloSottile/mkcert" "linux-amd64"` -O "/usr/local/bin/mkcert"
-sudo chmod +x "/usr/local/bin/mkcert"
+sudo wget -q `github_download_url "FiloSottile/mkcert" "linux-amd64"` -O /usr/local/bin/mkcert
+sudo chmod +x /usr/local/bin/mkcert
 [ -d "${HOME}/.local/share/mkcert" ] || mkcert -install
 
 # APACHE SETUP
@@ -177,8 +141,8 @@ sed -i "s@DOCUMENTROOT@${USER_APACHE_DIR}@g" "${USER_BIN_DIR}/a2v"
 chmod +x -R "${USER_BIN_DIR}/"
 "${USER_BIN_DIR}/a2c" -i "${DEFAULT_DOMAIN}" &>/dev/null
 [ -d "${USER_APACHE_DIR}" ] || mkdir -p "${USER_APACHE_DIR}"
-sudo find "${USER_APACHE_DIR}" -type f -exec chmod 644 {} \;
 sudo find "${USER_APACHE_DIR}" -type d -exec chmod 755 {} \;
+sudo find "${USER_APACHE_DIR}" -type f -exec chmod 644 {} \;
 
 # PHP SETUP
 cmd_exists php && echo -n "Updating" || echo -n "Installing"
@@ -220,11 +184,6 @@ sudo systemctl restart mariadb
   echo " '$.auth_or', json_array(json_object(), json_object('plugin', 'unix_socket'))) WHERE User='root';"
   echo " FLUSH PRIVILEGES;"
 ) | sudo mysql
-sudo cp -f "${SRC_PATH}/mariadb/bin/mysql-autobackup" /usr/local/bin/mysql-autobackup
-sudo sed -i "s@USER_MYSQL_AUTOBACKUP_DIR@${USER_MYSQL_AUTOBACKUP_DIR}@" /usr/local/bin/mysql-autobackup
-sudo sed -i "s/CURRENT_USER/${USER}/" /usr/local/bin/mysql-autobackup
-sudo chmod +x /usr/local/bin/mysql-autobackup
-sudo cp -f "${SRC_PATH}/mariadb/services/mysql-autobackup.service" /lib/systemd/system/mysql-autobackup.service
 
 
 # PHPMYADMIN SETUP
@@ -262,53 +221,6 @@ sudo chmod +x /usr/local/bin/mailhog
 sudo cp -f "${SRC_PATH}/mailhog/mailhog.service" /lib/systemd/system/mailhog.service
 sudo sed -i "s/DEFAULT_DOMAIN/${DEFAULT_DOMAIN}/" /lib/systemd/system/mailhog.service
 
-# COMPOSER SETUP
-cmd_exists composer && echo -n "Updating" || echo -n "Installing"
-echo " composer"
-wget -q `github_download_url "composer/composer" "composer.phar"` -O "${USER_BIN_DIR}/composer"
-chmod +x "${USER_BIN_DIR}/composer"
-[ -f "$HOME/.composer/composer.json" ] && "${USER_BIN_DIR}/composer" global update
-
-# WP CLI SETUP
-cmd_exists wp && echo -n "Updating" || echo -n "Installing"
-echo " WP CLI"
-wget -q https://raw.github.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -O "${USER_BIN_DIR}/wp"
-
-# PHP_CODESNIFFER
-( cmd_exists phpcs && cmd_exists phpcbf ) && echo -n "Updating" || echo -n "Installing"
-echo " PHP_CodeSniffer"
-for x in phpcs phpcbf; do
-wget -q https://squizlabs.github.io/PHP_CodeSniffer/${x}.phar -O "${USER_BIN_DIR}/${x}"
-done; unset x
-
-# PHPMD
-cmd_exists phpmd && echo -n "Updating" || echo -n "Installing"
-echo " PHPMD"
-wget -q https://phpmd.org/static/latest/phpmd.phar -O "${USER_BIN_DIR}/phpmd"
-
-# PHP-CS-FIXER
-cmd_exists php-cs-fixer && echo -n "Updating" || echo -n "Installing"
-echo " php-cs-fixer"
-wget -q https://cs.symfony.com/download/php-cs-fixer-v2.phar -O "${USER_BIN_DIR}/php-cs-fixer"
-
-# YARN SETUP
-if [[ ! -f "$HOME/.yarnrc" ]]; then
-  echo "Installing Yarn"
-  yarn config set prefix "$HOME/.local" --silent
-  yarn config set child-concurrency 1 --silent
-  yarn config set yarn-offline-mirror-pruning true --silent
-else
-  echo "Updating Yarn"
-fi
-
-YARN_INSTALLED="$(yarn global list | grep -vE 'yarn global|Done')"
-[ -n "${YARN_INSTALLED}" ] && echo -n "Updating" || echo -n "Installing"
-echo " Yarn Global Packages"
-for x in "${YARN_GLOBAL_PACKAGES_LIST[@]}"; do
-  echo "${YARN_INSTALLED}" | grep -q "${x}" && yarn global remove "${x}" --silent
-  yarn global add "${x}" --silent
-done; unset x
-
 # LAMP SERVICE
 [ -f /lib/systemd/system/lamp.service ] && echo -n "Updating" || echo -n "Installing"
 echo " Lamp service"
@@ -317,7 +229,7 @@ sudo cp -f "${SRC_PATH}/services/lamp.service" /lib/systemd/system/lamp.service
 # SERVER SERVICES
 sudo systemctl daemon-reload
 echo "Disabling lamp services"
-sudo systemctl disable lamp apache2 mariadb php7.4-fpm postfix mailhog mysql-autobackup &>/dev/null
+sudo systemctl disable lamp apache2 mariadb php7.4-fpm postfix mailhog &>/dev/null
 echo "Restarting lamp service"
 sudo systemctl restart lamp
 echo "Stopping lamp service"
