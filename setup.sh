@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 
-SETUP_PATH="$(cd `dirname -- $0` && pwd)"
-SRC_PATH="${SETUP_PATH}/src"
+SRC_PATH="$(cd `dirname -- $0` && pwd)"
 
 USER_BIN_DIR="${HOME}/.local/bin"
 
 DEFAULT_DOMAIN="ubuntu.localhost"
 USER_APACHE_DIR="${HOME}/Developer/www"
-USER_MYSQL_AUTOBACKUP_DIR="${HOME}/Developer/databases"
 
 PMA_LANG=es
 
@@ -22,18 +20,29 @@ INSTALL_PACKAGES=(
   mariadb-server
   postfix
 
-  php7.4-fpm
-  php7.4-bz2 # PHAR
-  php7.4-curl # phpMyAdmin
-  php7.4-gd # phpMyAdmin
-  php7.4-mbstring # phpMyAdmin
-  php7.4-mysql # phpMyAdmin
-  php7.4-zip # phpMyAdmin
-  php7.4-xml # PHP_CodeSniffer and WordPress
+  php8.0-fpm
+  php8.0-bz2 # PHAR
+  php8.0-curl # phpMyAdmin
+  php8.0-gd # phpMyAdmin
+  php8.0-mbstring # phpMyAdmin
+  php8.0-mysql # phpMyAdmin
+  php8.0-zip # phpMyAdmin
+  php8.0-xml # WordPress
+  php8.0-imagick # WordPress
+  php8.0-xdebug
 
-  php-imagick
+  php7.4-fpm
+  php7.4-bz2
+  php7.4-curl
+  php7.4-gd
+  php7.4-mbstring
+  php7.4-mysql
+  php7.4-zip
+  php7.4-xml
+  php7.4-imagick
+  php7.4-xdebug
+
   php-pear
-  php-xdebug
   ghostscript # Ghostscript is required for rendering PDF previews (WordPress)
   libnss-myhostname # Add support for domain like *.localhost
 )
@@ -69,9 +78,15 @@ function apt_install() {
 # SETUP
 #
 
+mkdir -p "${USER_BIN_DIR}"
+if ! `echo $PATH | grep -q "$USER_BIN_DIR"`; then
+  echo "Detected missing $USER_BIN_DIR inside PATH env"
+  echo "Add the $USER_BIN_DIR to PATH"
+fi
+
 # REQUIRED PACKAGES
 echo "Installing basic packages"
-apt_install curl wget pwgen apt-transport-https gnupg rsync lsb-release &>/dev/null
+apt_install curl wget pwgen apt-transport-https gnupg rsync lsb-release
 
 # REPOSITORIES SETUP
 CODENAME="$(lsb_release -sc)"
@@ -80,7 +95,7 @@ REQUIRE_UPDATE=1
 echo "Adding repositories"
 PPA_REPOSITORIES=( "ondrej/apache2" "ondrej/php" )
 for x in "${PPA_REPOSITORIES[@]}"; do
-  grep -q "^deb.*${x}" /etc/apt/sources.list.d/*.list || (
+  grep -q "^deb.*${x}" /etc/apt/sources.list.d/*.list &>/dev/null || (
     sudo add-apt-repository -y --no-update "ppa:${x}" &>/dev/null
     REQUIRE_UPDATE=0
   )
@@ -88,12 +103,12 @@ done; unset x
 
 
 if [[ ! -f "/etc/apt/sources.list.d/mariadb-${MARIADB_VERSION}.list" ]]; then
+  sudo find /etc/apt/sources.list.d -name "mariadb*" -delete
   sudo apt-key adv --fetch-keys "https://mariadb.org/mariadb_release_signing_key.asc"
   (
     echo "deb [arch=amd64,arm64,ppc64el] http://ams2.mirrors.digitalocean.com/mariadb/repo/${MARIADB_VERSION}/ubuntu ${CODENAME} main"
     echo "# deb-src http://ams2.mirrors.digitalocean.com/mariadb/repo/${MARIADB_VERSION}/ubuntu ${CODENAME} main"
   ) | sudo tee "/etc/apt/sources.list.d/mariadb-${MARIADB_VERSION}.list" &>/dev/null
-  find /etc/apt/sources.list.d/ -iname "*mariadb*" -not -iname "*mariadb-${MARIADB_VERSION}*"
   REQUIRE_UPDATE=0
 fi
 
@@ -103,8 +118,8 @@ fi
 )
 
 # INSTALL PACKAGES
-echo postfix postfix/main_mailer_type select Internet Site | sudo debconf-set-selections
-echo postfix postfix/mailname string ${DEFAULT_DOMAIN} | sudo debconf-set-selections
+echo "postfix postfix/main_mailer_type select Internet Site" | sudo debconf-set-selections
+echo "postfix postfix/mailname string ${DEFAULT_DOMAIN}" | sudo debconf-set-selections
 apt_install ${INSTALL_PACKAGES[@]}
 
 # MKCERT SETUP
@@ -129,20 +144,17 @@ MODULES=(
 MODS_ENABLED="$(ls /etc/apache2/mods-enabled)"
 for x in "${MODULES[@]}"; do echo "${MODS_ENABLED}" | grep -q "${x}" || sudo a2enmod "${x}"; done; unset x
 sudo rm -f /etc/apache2/mods-enabled/status.{conf,load}
-sudo find /etc/apache2/conf-enabled ! -type d -delete
-sudo find /etc/apache2/sites-enabled ! -type d -name "*default*" -delete
-sudo find /etc/apache2/sites-available ! -type d -name "*default*" -delete
+sudo find /etc/apache2/conf-enabled -mindepth 1 -delete
+sudo find /etc/apache2/sites-enabled /etc/apache2/sites-available -mindepth 1 -name "*default*" -delete
 [ -f /etc/apache2/apache2.conf.original ] || sudo mv /etc/apache2/apache2.conf{,.original}
 sudo cp -f "${SRC_PATH}/apache/apache2.conf" /etc/apache2/apache2.conf
 sudo sed -i "s/DEFAULT_DOMAIN/${DEFAULT_DOMAIN}/g" /etc/apache2/apache2.conf
 sudo sed -i "s@VIRTUALHOSTS_DIR@${USER_APACHE_DIR}@g" /etc/apache2/apache2.conf
-rsync -azh "${SRC_PATH}/apache/bin/" "${USER_BIN_DIR}/"
+rsync -az "${SRC_PATH}/apache/bin/" "${USER_BIN_DIR}/"
 sed -i "s@DOCUMENTROOT@${USER_APACHE_DIR}@g" "${USER_BIN_DIR}/a2v"
 chmod +x -R "${USER_BIN_DIR}/"
-"${USER_BIN_DIR}/a2c" -i "${DEFAULT_DOMAIN}" &>/dev/null
+"${USER_BIN_DIR}/a2c" -c "${DEFAULT_DOMAIN}" &>/dev/null
 [ -d "${USER_APACHE_DIR}" ] || mkdir -p "${USER_APACHE_DIR}"
-sudo find "${USER_APACHE_DIR}" -type d -exec chmod 755 {} \;
-sudo find "${USER_APACHE_DIR}" -type f -exec chmod 644 {} \;
 
 # PHP SETUP
 cmd_exists php && echo -n "Updating" || echo -n "Installing"
@@ -151,9 +163,9 @@ echo " PHP"
   echo "<?php phpinfo();"
 ) | sudo tee /var/www/html/info.php &>/dev/null
 sudo phpdismod -s cli xdebug
-sudo rsync -azh "${SRC_PATH}/php/7.4/" /etc/php/7.4/
 PHP_CURL_CERT="$(ls /etc/ssl/certs/ | grep -m1 mkcert)"
 for php_version in $(ls /etc/php); do
+    sudo rsync -azh "${SRC_PATH}/php/8.0/" "/etc/php/$php_version/"
     if [[ -d "/etc/php/$php_version/fpm" ]]; then
       if [[ -f "/usr/lib/php/$php_version/php.ini-development" ]]; then
         sudo cp -f "/usr/lib/php/$php_version/php.ini-development" "/etc/php/$php_version/fpm/php.ini"
@@ -164,11 +176,16 @@ for php_version in $(ls /etc/php); do
       if [[ -f "/etc/php/$php_version/fpm/php-fpm.conf" ]]; then
         sudo sed -i 's@^error_log.*@error_log = /var/log/php-fpm.log@' "/etc/php/$php_version/fpm/php-fpm.conf"
       fi
+      if [[ -f "/etc/php/$php_version/fpm/pool.d/www.conf" ]]; then
+        sudo sed -i "s/PHP_VERSION/$php_version/" "/etc/php/$php_version/fpm/pool.d/www.conf"
+      fi
       if [[ -f "/etc/php/$php_version/fpm/pool.d/user.conf" ]]; then
         sudo sed -i "s/CURRENT_USER/${USER}/" "/etc/php/$php_version/fpm/pool.d/user.conf"
+        sudo sed -i "s/PHP_VERSION/$php_version/" "/etc/php/$php_version/fpm/pool.d/user.conf"
       fi
     fi
 done
+sudo cp -f "${SRC_PATH}/php/php-fpm.service" /lib/systemd/system/php-fpm.service
 
 # MARIADB SETUP
 cmd_exists mysql && echo -n "Updating" || echo -n "Installing"
@@ -221,25 +238,17 @@ sudo chmod +x /usr/local/bin/mailhog
 sudo cp -f "${SRC_PATH}/mailhog/mailhog.service" /lib/systemd/system/mailhog.service
 sudo sed -i "s/DEFAULT_DOMAIN/${DEFAULT_DOMAIN}/" /lib/systemd/system/mailhog.service
 
-# LAMP SERVICE
-[ -f /lib/systemd/system/lamp.service ] && echo -n "Updating" || echo -n "Installing"
-echo " Lamp service"
+# SERVER SERVICES
+echo "Tweaks for lamp services"
 sudo cp -f "${SRC_PATH}/services/lamp.service" /lib/systemd/system/lamp.service
 
-# SERVER SERVICES
 sudo systemctl daemon-reload
-echo "Disabling lamp services"
-sudo systemctl disable lamp apache2 mariadb php7.4-fpm postfix mailhog &>/dev/null
-echo "Restarting lamp service"
-sudo systemctl restart lamp
-echo "Stopping lamp service"
-sudo systemctl stop lamp
+sudo systemctl disable apache2 php-fpm mariadb postfix mailhog lamp &>/dev/null
+find /lib/systemd/system/ -name "php*-fpm*" -not -name "php-fpm*" -exec basename {} \; | xargs sudo systemctl disable &>/dev/null
 
-# LAMP COMMAND
-[ -f "${USER_BIN_DIR}/lamp" ] && echo -n "Updating" || echo -n "Installing"
-echo " Lamp command, alias of the sudo systemctl lamp"
-cp -f "${SRC_PATH}/bin/lamp" "${USER_BIN_DIR}/lamp"
-chmod +x "${USER_BIN_DIR}/lamp"
-if ! cmd_exists lamp; then
-  echo "The ${USER_BIN_DIR} not exists in PATH"
-fi
+echo "Creating the lamp command, shortcut for all lamp services"
+rsync -az "${SRC_PATH}/bin/" "${USER_BIN_DIR}/"
+chmod +x -R "${USER_BIN_DIR}/"
+
+echo "Restating the lamp services using the lamp command"
+"${USER_BIN_DIR}/lamp" restart

@@ -14,6 +14,9 @@ cat <<EOF > /tmp/a2v-template
   <Directory /usr/lib/cgi-bin>
     SSLOptions +StdEnvVars
   </Directory>
+	<FilesMatch ".+\.ph(ar|p|tml)$">
+		SetHandler "proxy:unix:/run/php/phpVERSION-fpm-user.sock|fcgi://localhost"
+	</FilesMatch>
 </VirtualHost>
 EOF
 
@@ -28,8 +31,10 @@ function usage() {
   echo
   echo "OPTIONS:"
   echo " -c Create or recreate if exists the VirtualHost for domain"
-  echo "    -db Create database if not exists, if you do not specify it used the domain,"
-  echo "        when there is more than one domain must be specified for each."
+  echo "    -db  Create database if not exists, if you do not specify it used the domain,"
+  echo "         when there is more than one domain must be specified for each."
+  echo "    -php Define the PHP version to use, 8.0, 7.4, etc..."
+  echo "         Default: latest"
   echo "    After create if enabled automatically"
   echo " -r Delete the VirtualHost for domain"
   echo "    -db Delete database if exists, if you do not specify it used the domain,"
@@ -50,7 +55,6 @@ function usage() {
 }
 
 [ $# -gt 0 ] || usage
-
 
 ACTION=""
 while [[ $# -gt 0 ]]; do
@@ -86,6 +90,7 @@ done
 
 DOMAINS=()
 DATABASES=()
+PHP_VERSIONS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -db )
@@ -112,11 +117,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+exit
+
 if [[ ${#DOMAINS[@]} -gt 0 ]]; then
-  sudo -p "Sudo session, enter password: " echo -n ""
   if [[ "${ACTION}" == "c" ]]; then
     for domain in "${DOMAINS[@]}"; do
-      a2c -i "${domain}.localhost"
+      a2c -c "${domain}.localhost"
       if [[ $? -eq 0 ]]; then
         sudo cp -f /tmp/a2v-template "/etc/apache2/sites-available/${domain}.conf"
         sudo sed -i "s/DOMAIN/${domain}/g" "/etc/apache2/sites-available/${domain}.conf"
@@ -129,7 +135,7 @@ if [[ ${#DOMAINS[@]} -gt 0 ]]; then
   elif [[ "${ACTION}" == "r" ]]; then
     for domain in "${DOMAINS[@]}"; do
       sudo find /etc/apache2/sites-* ! -type d -name "${domain}.conf" -delete;
-      a2c -r "${domain}.localhost"
+      a2c -d "${domain}.localhost"
     done
     for db in "${DATABASES[@]}"; do
       sudo mysql -uroot -e "DROP DATABASE IF EXISTS $db;"

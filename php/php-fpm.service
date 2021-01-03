@@ -1,0 +1,12 @@
+[Unit]
+Description=PHP * FPM services
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'find /lib/systemd/system/ -name "php*-fpm*" -not -name "php-fpm*" -exec basename {} \; | xargs systemctl restart'
+ExecStop=/bin/bash -c 'find /lib/systemd/system/ -name "php*-fpm*" -not -name "php-fpm*" -exec basename {} \; | xargs systemctl stop'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
