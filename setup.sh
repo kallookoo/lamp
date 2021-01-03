@@ -64,13 +64,11 @@ function apt_install() {
   local to_install=()
   echo "Checking if the packages is installed"
   for x in "${@}"; do
-    if ! cmd_exists $x; then
-      ( LANG= apt-cache policy "$x" | grep -q 'Installed: (none)' ) && to_install+=($x);
-    fi
+    ( LANG= apt-cache policy "$x" | grep -q 'Installed: (none)' ) && to_install+=($x);
   done; unset x
   if [[ ${#to_install[@]} -gt 0 ]]; then
     echo "Installing packages"
-    sudo apt install -y --no-install-recommends ${to_install[@]}
+    sudo apt install -y ${to_install[@]}
   fi
 }
 
