@@ -102,7 +102,7 @@ done; unset x
 
 if [[ ! -f "/etc/apt/sources.list.d/mariadb-${MARIADB_VERSION}.list" ]]; then
   sudo find /etc/apt/sources.list.d -name "mariadb*" -delete
-  sudo apt-key adv --fetch-keys "https://mariadb.org/mariadb_release_signing_key.asc"
+  sudo apt-key adv --fetch-keys "https://mariadb.org/mariadb_release_signing_key.asc" &>/dev/null
   (
     echo "deb [arch=amd64,arm64,ppc64el] http://ams2.mirrors.digitalocean.com/mariadb/repo/${MARIADB_VERSION}/ubuntu ${CODENAME} main"
     echo "# deb-src http://ams2.mirrors.digitalocean.com/mariadb/repo/${MARIADB_VERSION}/ubuntu ${CODENAME} main"
@@ -151,7 +151,7 @@ sudo sed -i "s@VIRTUALHOSTS_DIR@${USER_APACHE_DIR}@g" /etc/apache2/apache2.conf
 rsync -az "${SRC_PATH}/apache/bin/" "${USER_BIN_DIR}/"
 sed -i "s@DOCUMENTROOT@${USER_APACHE_DIR}@g" "${USER_BIN_DIR}/a2v"
 chmod +x -R "${USER_BIN_DIR}/"
-"${USER_BIN_DIR}/a2c" -c "${DEFAULT_DOMAIN}" &>/dev/null
+"${USER_BIN_DIR}/a2c" -c "${DEFAULT_DOMAIN}"
 [ -d "${USER_APACHE_DIR}" ] || mkdir -p "${USER_APACHE_DIR}"
 
 # PHP SETUP
@@ -184,6 +184,8 @@ for php_version in $(ls /etc/php); do
     fi
 done
 sudo cp -f "${SRC_PATH}/php/php-fpm.service" /lib/systemd/system/php-fpm.service
+sudo cp -f "${SRC_PATH}/php/bin/php-fpm" /usr/local/bin/php-fpm
+sudo chmod +x /usr/local/bin/php-fpm
 
 # MARIADB SETUP
 cmd_exists mysql && echo -n "Updating" || echo -n "Installing"
@@ -242,7 +244,7 @@ sudo cp -f "${SRC_PATH}/services/lamp.service" /lib/systemd/system/lamp.service
 
 sudo systemctl daemon-reload
 sudo systemctl disable apache2 php-fpm mariadb postfix mailhog lamp &>/dev/null
-find /lib/systemd/system/ -name "php*-fpm*" -not -name "php-fpm*" -exec basename {} \; | xargs sudo systemctl disable &>/dev/null
+sudo php-fpm disable &>/dev/null
 
 echo "Creating the lamp command, shortcut for all lamp services"
 rsync -az "${SRC_PATH}/bin/" "${USER_BIN_DIR}/"
