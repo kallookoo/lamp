@@ -8,6 +8,9 @@ cat <<EOF > /tmp/a2v-template
   DocumentRoot DOCUMENTROOT/DOMAIN
   SSLEngine on
   SSLCertificateFile /etc/apache2/certs/DOMAIN.localhost.pem
+	<FilesMatch ".+\.ph(ar|p|tml)$">
+		SetHandler "proxy:unix:/run/php/php8.0-fpm-user.sock|fcgi://localhost"
+	</FilesMatch>
   <FilesMatch "\.(cgi|shtml|phtml|php)$">
     SSLOptions +StdEnvVars
   </FilesMatch>
@@ -17,134 +20,145 @@ cat <<EOF > /tmp/a2v-template
 </VirtualHost>
 EOF
 
-function in_array() {
-  [ `printf '%s\n' "${@}" | grep -cx "$1"` -gt 1 ] && return 0
-  return 1
-}
-
-function usage() {
-  echo "Usage: a2v -c -db domain@database domain..."
-  echo
-  echo "OPTIONS:"
-  echo " -c Create or recreate if exists the VirtualHost for domain"
-  echo "    -db  Create database if not exists, if you do not specify it used the domain,"
-  echo "         when there is more than one domain must be specified for each."
-  echo "    After create if enabled automatically"
-  echo " -r Delete the VirtualHost for domain"
-  echo "    -db Delete database if exists, if you do not specify it used the domain,"
-  echo "        when there is more than one domain must be specified for each."
-  echo " -e Enable the VirtualHost for domain"
-  echo " -d Disable the VirtualHost for domain"
-  echo " -l List all VirtualHosts"
-  echo " -h Print this text and exit"
-  echo
-  echo "* Always append the localhost TLD to domain"
-  echo "* Use DOCUMENTROOT/domain for DocumentRoot"
-  echo "* Ask for sudo password, when you create or delete VirtualHost"
-  echo "* Auto generate certificates using a2c command."
-  echo "* All VirtualHosts saved to /etc/apache2/sites-available"
-  echo "* Multiples domains is supported"
-  echo
+function show_list() {
+  find /etc/apache2/sites-available -type f -exec basename {} \; | sed -E 's/\.conf$//g' | while read server_name; do
+    echo -n "- $server_name "; [ -f "/etc/apache2/sites-enabled/$server_name.conf" ] && echo "(Enabled)" || echo "(Disabled)"
+  done; unset server_name
   exit
 }
 
-[ $# -gt 0 ] || usage
-
-ACTION=""
-while [[ $# -gt 0 ]]; do
-  case "${1}" in
-    -h ) usage ;;
-    -c|-r|-e|-d )
-      if [[ -z "${ACTION}" ]]; then
-        ACTION="${1/-/}"
+function create_vh() {
+  local domain=""
+  local database=""
+  local php_version="8.0"
+  local with_db=no
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -db )
+        with_db=yes
         shift
-      else
-        echo "Only allowed one option"
-        exit
-      fi
-      ;;
-    -l )
-      a=( `ls /etc/apache2/sites-available | sed -E 's/\.conf$//g'` )
-      if [[ ${#a[@]} -gt 0 ]]; then
-        e=( `ls /etc/apache2/sites-enabled | sed -E 's/\.conf$//g'` )
-        for x in "${a[@]}"; do
-          echo -n " - $x "
-          if in_array $x ${e[@]}; then
-            echo "(Enabled)"
-          else
-            echo "(Disabled)"
-          fi
-        done
-      fi
-      exit
-      ;;
-    * ) break ;;
-  esac
-done
-
-DOMAINS=()
-DATABASES=()
-
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -db )
-        if [[ "${2:-}" != "" ]]; then
-          if echo "$2" | grep -q "@"; then
-            DOMAINS+=( `echo "$2" | awk -F "@" '{print $1}'` )
-            DATABASES+=( `echo $2 | awk -F "@" '{print $2}'` )
-          else
-            DOMAINS+=( "$2" )
-            DATABASES+=( "$2" )
-          fi
+        ;;
+      -php )
+        if `echo ${2:-} | grep -qE '^[0-9]\.[0-9]$'`; then
+          php_version="$2"
           shift
+        else
+          echo "Invalid PHP version"
+          exit
         fi
         shift
-      ;;
-    * )
-      if ! echo "$1" | grep -qP "^[\w\-]+(\.[\w]+)?$"; then
-        echo "Invalid $1 domain, skipping"
-      else
-        DOMAINS+=( "$1" )
-      fi
-      shift
-      ;;
-  esac
-done
+        ;;
+      * ) break ;;
+    esac
+  done
+
+  if [[ -z "${1:-}" ]] || [[ "${1:0:1}" == "-" ]]; then
+    echo "Invalid format of the arguments"
+    exit
+  fi
+
+  domain="$1"
+  database="$1"
+  if echo "$1" | grep -q "@"; then
+    domain=`echo "$1" | awk -F "@" '{print $1}'`
+    database=`echo "$1" | awk -F "@" '{print $2}'`
+  fi
+
+  a2c -c "$domain.localhost"
+  sudo cp -f /tmp/a2v-template "/etc/apache2/sites-available/$domain.conf"
+  sudo sed -i "s/DOMAIN/$domain/g" "/etc/apache2/sites-available/$domain.conf"
+  if [[ "$php_version" != "8.0" ]] && [[ -f "/etc/php/$php_version/fpm/pool.d/user.conf" ]]; then
+    sudo sed -i "s/php8.0-fpm/php${php_version}-fpm/" "/etc/apache2/sites-available/$domain.conf"
+  fi
+  sudo a2ensite "$domain" &>/dev/null
+
+  if [[ "$with_db" == "yes" ]] && [[ -n "${database}" ]]; then
+    sudo systemctl status mysql &>/dev/null || sudo systemctl start mysql
+    sudo mysql -uroot -e "CREATE DATABASE IF NOT EXISTS $database;"
+  fi
+
+  restart_apache=yes
+  shift
+  if [[ $# -gt 0 ]]; then
+    create_vh $@
+  fi
+}
+
+function remove_vh() {
+  if [[ "$1" == "-db" ]]; then
+    shift
+    sudo systemctl status mysql &>/dev/null || sudo systemctl start mysql
+    sudo mysql -uroot -e "DROP DATABASE IF EXISTS $1;"
+  fi
+  sudo find /etc/apache2/sites-* ! -type d -name "$1.conf" -delete;
+  a2c -d "$1.localhost"
+  restart_apache=yes
+  shift
+  if [[ $# -gt 0 ]]; then
+    remove_vh $@
+  fi
+
+}
+
+function enable_vh() {
+  while [[ $# -gt 0 ]]; do
+    if [[ -f "/etc/apache2/sites-available/$1.conf" ]] && [[ ! -f "/etc/apache2/sites-enabled/$1.conf" ]]; then
+      sudo ln -s "/etc/apache2/sites-available/$1.conf" "/etc/apache2/sites-enabled/$1.conf"
+      restart_apache=yes
+    fi
+    shift
+  done
+}
+
+function disable_vh() {
+  while [[ $# -gt 0 ]]; do
+    if [[ -f "/etc/apache2/sites-enabled/$1.conf" ]]; then
+      sudo rm -f "/etc/apache2/sites-enabled/$1.conf"
+      restart_apache=yes
+    fi
+    shift
+  done
+}
+
+function usage_vh() {
+  (
+    echo "Usage: a2v -c -db domain@database domain..."
+    echo
+    echo "OPTIONS:"
+    echo " -c Create or recreate if exists the VirtualHost for domain"
+    echo "    -db  Create database if not exists, if you do not specify it used the domain,"
+    echo "    -php Define the php version to use, if not installed use the latest version."
+    echo "    when there is more than one domain must be specified for each."
+    echo "    After create if enabled automatically."
+    echo " -r Delete the VirtualHost for domain"
+    echo "    -db Delete database if exists, if you do not specify it used the domain,"
+    echo "        when there is more than one domain must be specified for each."
+    echo " -e Enable the VirtualHost for domain"
+    echo " -d Disable the VirtualHost for domain"
+    echo " -l List all VirtualHosts"
+    echo " -h Print this text and exit"
+    echo
+    echo "* Always append the localhost TLD to domain"
+    echo "* Use /home/sergio/Developer/www/domain for DocumentRoot"
+    echo "* Auto generate certificate using a2c command."
+    echo "* All VirtualHosts saved to /etc/apache2/sites-available"
+    echo "* Multiples domains is supported"
+    echo
+    ) | less
+  exit
+}
+
+case ${1:-x} in
+  -l ) show_list ;;
+  -c ) shift; create_vh $@ ;;
+  -r ) shift; remove_vh $@ ;;
+  -e ) shift; enable_vh $@ ;;
+  -d ) shift; disable_vh $@ ;;
+  * ) usage_vh ;;
+esac
+
+if [[ -n "${restart_apache:-}" ]]; then
+  sudo systemctl status apache2 &>/dev/null && sudo systemctl restart apache2
+fi
 
 exit
-
-if [[ ${#DOMAINS[@]} -gt 0 ]]; then
-  if [[ "${ACTION}" == "c" ]]; then
-    for domain in "${DOMAINS[@]}"; do
-      a2c -c "${domain}.localhost"
-      if [[ $? -eq 0 ]]; then
-        sudo cp -f /tmp/a2v-template "/etc/apache2/sites-available/${domain}.conf"
-        sudo sed -i "s/DOMAIN/${domain}/g" "/etc/apache2/sites-available/${domain}.conf"
-        sudo a2ensite "${domain}" &>/dev/null
-      fi
-    done
-    for db in "${DATABASES[@]}"; do
-      sudo mysql -uroot -e "CREATE DATABASE IF NOT EXISTS $db;"
-    done
-  elif [[ "${ACTION}" == "r" ]]; then
-    for domain in "${DOMAINS[@]}"; do
-      sudo find /etc/apache2/sites-* ! -type d -name "${domain}.conf" -delete;
-      a2c -d "${domain}.localhost"
-    done
-    for db in "${DATABASES[@]}"; do
-      sudo mysql -uroot -e "DROP DATABASE IF EXISTS $db;"
-    done
-  elif [[ "${ACTION}" == "e" ]]; then
-    for domain in "${DOMAINS[@]}"; do
-      if [[ ! -f "/etc/apache2/sites-available/${domain}.conf" ]]; then
-        a2v -c "${domain}"
-      elif [[ ! -f "/etc/apache2/sites-enabled/${domain}.conf" ]]; then
-        sudo a2ensite "${domain}" &>/dev/null
-      fi
-    done
-  elif [[ "${ACTION}" == "d" ]]; then
-    sudo a2dissite ${DOMAINS[@]} &>/dev/null
-  fi
-  sudo systemctl restart apache2
-  exit
-fi
