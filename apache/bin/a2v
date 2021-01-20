@@ -64,7 +64,6 @@ function create_vh() {
     database=`echo "$1" | awk -F "@" '{print $2}'`
   fi
 
-  sudo echo -n ""
   a2c -c "$domain.localhost"
   sudo cp -f /tmp/a2v-template "/etc/apache2/sites-available/$domain.conf"
   sudo sed -i "s/DOMAIN/$domain/g" "/etc/apache2/sites-available/$domain.conf"

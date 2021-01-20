@@ -21,7 +21,7 @@ case "${1:-}" in
   -c )
     for x in "${@:2}"; do
       if validate_domain $x; then
-        echo -n "Creating ${x} certificate"
+        sudo echo -n "Creating ${x} certificate"
         mkcert -ecdsa -cert-file "${MKCERT_DIRECTORY}/${x}.pem" -key-file "${MKCERT_DIRECTORY}/${x}.key" "${x}" "*.${x}" &>/dev/null
         if [[ $? -eq 0 ]]; then
           sudo cat "${MKCERT_DIRECTORY}/${x}.pem" | sudo tee -a "${MKCERT_DIRECTORY}/${x}.key" &>/dev/null
