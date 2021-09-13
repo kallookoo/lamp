@@ -20,16 +20,16 @@ INSTALL_PACKAGES=(
   mariadb-server
   postfix
 
-  php8.0-fpm
-  php8.0-bz2 # PHAR
-  php8.0-curl # phpMyAdmin
-  php8.0-gd # phpMyAdmin
-  php8.0-mbstring # phpMyAdmin
-  php8.0-mysql # phpMyAdmin
-  php8.0-zip # phpMyAdmin
-  php8.0-xml # WordPress
-  php8.0-imagick # WordPress
-  php8.0-xdebug
+  # php8.0-fpm
+  # php8.0-bz2 # PHAR
+  # php8.0-curl # phpMyAdmin
+  # php8.0-gd # phpMyAdmin
+  # php8.0-mbstring # phpMyAdmin
+  # php8.0-mysql # phpMyAdmin
+  # php8.0-zip # phpMyAdmin
+  # php8.0-xml # WordPress
+  # php8.0-imagick # WordPress
+  # php8.0-xdebug
 
   php7.4-fpm
   php7.4-bz2
