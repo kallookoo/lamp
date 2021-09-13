@@ -1,6 +1,6 @@
 [Unit]
 Description=MailHog Email Catcher
-After=apache2.service
+After=syslog.target network.target
 
 [Service]
 Type=simple
