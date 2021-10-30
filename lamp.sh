@@ -56,6 +56,10 @@ function include() {
   fi
 }
 
+if [[ -f "$LAMP_PATH/config.sh" ]]; then
+  . "$LAMP_PATH/config.sh"
+fi
+
 LAMP_FQDN=`hostname -f`
 [ -n "$LAM_CONFIG_FQDN" ] && LAMP_FQDN="$LAMP_CONFIG_FQDN"
 LAMP_FQDN_EXPANDED=( $(echo $LAMP_FQDN | tr '.' ' ') )
@@ -80,6 +84,9 @@ fi
 
 if [[ "$LAMP_TLD" != "localhost" ]]; then
   LAMP_IP_ADDRESS=( $(hostname -I) )
+  if [[ -n "$LAMP_CONFIG_IP_ADDRESS" ]]; then
+    LAMP_IP_ADDRESS=( "$LAMP_CONFIG_IP_ADDRESS" )
+  fi
   if [[ "${#LAMP_IP_ADDRESS[@]}" -lt 1 ]]; then
     echo "Missing IP, declare the LAMP_CONFIG_IP_ADDRESS option to select the correct IP"
     exit 1
@@ -89,6 +96,10 @@ if [[ "$LAMP_TLD" != "localhost" ]]; then
     exit 1
   fi
   LAMP_IP_ADDRESS="${LAMP_IP_ADDRESS[0]}"
+  if ! echo "${LAMP_IP_ADDRESS}" | grep -Eq '^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$'; then
+    echo "Invalid IP Address, only support IP v4"
+		exit 1
+	fi
 fi
 
 include system
