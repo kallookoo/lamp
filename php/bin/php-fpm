@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-find /lib/systemd/system/ -name "php*-fpm*" -not -name "php-fpm*" -exec basename {} \; | xargs systemctl $1
-exit $?
