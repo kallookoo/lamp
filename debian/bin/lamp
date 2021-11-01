@@ -8,10 +8,13 @@ function in_array() {
 
 # Simple validator for domains
 # to prevent use wildcards or subdomains
-# this command always create wildcard certificate
 function validate_domain() {
-  echo $1 | grep -qP "^[\w\-]+\.[\w]+$"
-  [ $? -eq 0 ] && return 0 || echo -e "\e[0;31mInvalid format for '${1}' domain\e[0m"; return 1
+  echo $1 | grep -qP "(?=^.{1,254}$)(^(?>(?:[\d+\.]+)?[a-z0-9_\-]{1,63}\.?)+(?:[a-z]{2,})$)"
+  if [ $? -ne 0 ]; then
+    echo -e "\e[0;31mInvalid format for '${1}' domain\e[0m"
+    return 1
+  fi
+  return 0
 }
 
 function show_domains() {
@@ -22,6 +25,17 @@ function show_domains() {
         [ -f "/etc/apache2/sites-enabled/$domain.conf" ] && echo "(Enabled)" || echo "(Disabled)"
       done; unset domain
   exit
+}
+
+function create_subdomain() {
+  local subdomain="$1"
+  local domain=`echo $subdomain | sed -E 's/^[^\.]+\.//'`
+
+  sed -i 's/ServerAlias.*//' "/etc/apache2/sites-available/$subdomain.conf"
+  sed -i "s/webmaster.*/webmaster@$domain/" "/etc/apache2/sites-available/$subdomain.conf"
+  sed -i "s@certificates.*@certificates/$domain.pem@" "/etc/apache2/sites-available/$subdomain.conf"
+
+  mkcert create "$domain"
 }
 
 function create_domain() {
@@ -63,8 +77,7 @@ function create_domain() {
 
   domain="$domain.LAMP_TLD"
   if validate_domain "$domain"; then
-    mkcert create "$domain"
-    cat <<EOF > "/etc/apache2/sites-available/$domain.conf"
+      cat <<EOF > "/etc/apache2/sites-available/$domain.conf"
 <VirtualHost *:443>
   ServerName $domain
   ServerAlias *.$domain
@@ -72,17 +85,22 @@ function create_domain() {
   DocumentRoot "/VIRTUALHOSTS_DIR/$domain"
   SSLCertificateFile "/opt/mkcert/certificates/$domain.pem"
 EOF
-
     if [[ -n "$php_version" ]] && [[ -f "/etc/php/$php_version/fpm/pool.d/user.conf" ]]; then
       cat <<EOF >> "/etc/apache2/sites-available/$domain.conf"
-  <FilesMatch ".+\.ph(ar|p|tml)$">
-    SetHandler "proxy:unix:/run/php/php$php_version-fpm-user.sock|fcgi://localhost"
-  </FilesMatch>
+  <Directory /VIRTUALHOSTS_DIR/$domain/>
+    <FilesMatch ".+\.ph(ar|p|tml)$">
+      SetHandler "proxy:unix:/run/php/php$php_version-fpm-user.sock|fcgi://localhost"
+    </FilesMatch>
+  </Directory>
 EOF
     fi
     echo "</VirtualHost>" >> "/etc/apache2/sites-available/$domain.conf"
-    enable_domain "$( echo $domain | awk -F'.' '{print $1}')"
-
+    if [[ `echo "$domain" | awk -F'.' 'END{print NF}'` -eq 2 ]]; then
+      mkcert create "$domain"
+    else
+      create_subdomain "$domain"
+    fi
+    enable_domain "$domain"
     if [[ "$with_db" == "yes" ]] && [[ -n "${database}" ]]; then
       systemctl restart mysql
       mysql -e "CREATE DATABASE IF NOT EXISTS $database;"
@@ -115,8 +133,15 @@ function delete_domain() {
 
   domain="$domain.LAMP_TLD"
   if validate_domain "$domain"; then
-    find /etc/apache2/sites-* -mindepth 1 -name "$domain.conf" -delete;
-    mkcert delete "$domain"
+    find /etc/apache2/sites-* -name "$domain.conf" -delete;
+    if [[ `echo "$domain" | awk -F'.' 'END{print NF}'` -ne 2 ]]; then
+      domain=`echo $domain | sed -E 's/^[^\.]+\.//'`
+    fi
+
+    if [[ `find /etc/apache2/sites-available -name "*$domain.conf" | wc -l` -eq 0 ]]; then
+      mkcert delete "$domain"
+    fi
+
     restart_apache=yes
     if [[ "$with_db" == "yes" ]] && [[ -n "${database}" ]]; then
       systemctl restart mysql
@@ -131,8 +156,12 @@ function delete_domain() {
 
 function enable_domain() {
   local domain=""
+  local tld="LAMP_TLD"
   while [[ $# -gt 0 ]]; do
-    domain="$1.LAMP_TLD"
+    domain="$1"
+    if ! echo $domain | grep -qE "\.$tld$"; then
+      domain="$domain.$tld"
+    fi
     if validate_domain "$domain"; then
       if [[ -f "/etc/apache2/sites-available/$domain.conf" ]] && [[ ! -f "/etc/apache2/sites-enabled/$domain.conf" ]]; then
         mkdir -p "/VIRTUALHOSTS_DIR/$domain"
@@ -146,12 +175,18 @@ function enable_domain() {
 
 function disable_domain() {
   local domain=""
+  local tld="LAMP_TLD"
   while [[ $# -gt 0 ]]; do
-    domain="$1.LAMP_TLD"
+    domain="$1"
+    if ! echo $domain | grep -qE "\.$tld$"; then
+      domain="$domain.$tld"
+    fi
     if validate_domain "$domain"; then
       if [[ -f "/etc/apache2/sites-enabled/$domain.conf" ]]; then
         rm -f "/etc/apache2/sites-enabled/$domain.conf"
         restart_apache=yes
+      else
+        echo "The $domain domain is already disabled"
       fi
     fi
     shift
@@ -175,10 +210,11 @@ function usage() {
   echo " show    - List all VirtualHosts"
   echo " help    - Print this text and exit"
   echo
-  echo "* Always append the LAMP_TLD TLD to domain name."
-  echo "* Use /VIRTUALHOSTS_DIR/domain.LAMP_TLD for DocumentRoot and create if not exists."
+  echo "* Always append the \"LAMP_TLD\" TLD to domain name."
+  echo "* You can create separate subdomains but because the mkcert does not support it, the certificate will be created for the domain."
+  echo "* Use \"/VIRTUALHOSTS_DIR/domain.LAMP_TLD\" for the DocumentRoot and create the directory if not exists."
   echo "* Auto generate certificate using the mkcert command."
-  echo "* All domains created are stored in /etc/apache2/sites-available"
+  echo "* All domains created are stored in \"/etc/apache2/sites-available\""
   echo "* Multiples domains is supported"
   exit
 }
@@ -211,6 +247,7 @@ fi
 
 if [[ -n "${restart_apache:-}" ]]; then
   systemctl restart apache2
+  find /lib/systemd/system/ -name "php*-fpm*" -exec basename {} \; | xargs -r systemctl restart
 fi
 
 exit
