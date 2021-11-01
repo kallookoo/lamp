@@ -69,11 +69,12 @@ $cfg['Servers'][ $i ]['export_templates']  = 'pma__export_templates';
  * End of servers configuration
  */
 
-$cfg['TempDir']          = '/tmp/';
-$cfg['ThemeManager']     = false;
-$cfg['MaxRows']          = 50;
-$cfg['SendErrorReports'] = 'never';
-$cfg['TitleDefault']     = '@HTTP_HOST@';
-$cfg['TitleServer']      = '@HTTP_HOST@';
-$cfg['TitleDatabase']    = '@HTTP_HOST@ : @DATABASE@';
-$cfg['TitleTable']       = '@HTTP_HOST@ : @DATABASE@ : @TABLE@';
+$cfg['TempDir']                       = '/tmp/';
+$cfg['ThemeManager']                  = false;
+$cfg['MaxRows']                       = 50;
+$cfg['SendErrorReports']              = 'never';
+$cfg['TitleDefault']                  = '@HTTP_HOST@';
+$cfg['TitleServer']                   = '@HTTP_HOST@';
+$cfg['TitleDatabase']                 = '@HTTP_HOST@ : @DATABASE@';
+$cfg['TitleTable']                    = '@HTTP_HOST@ : @DATABASE@ : @TABLE@';
+$cfg['ShowDatabasesNavigationAsTree'] = false;
