@@ -9,15 +9,17 @@ fi
 
 LAMP_PHP_PACKAGES=(
   "php${LAMP_PHP_VERSION}-fpm"
+
   "php${LAMP_PHP_VERSION}-bz2"
   "php${LAMP_PHP_VERSION}-curl"
   "php${LAMP_PHP_VERSION}-gd"
+  "php${LAMP_PHP_VERSION}-imagick"
   "php${LAMP_PHP_VERSION}-mbstring"
   "php${LAMP_PHP_VERSION}-mysql"
-  "php${LAMP_PHP_VERSION}-zip"
-  "php${LAMP_PHP_VERSION}-xml"
-  "php${LAMP_PHP_VERSION}-imagick"
+  "php${LAMP_PHP_VERSION}-soap"
   "php${LAMP_PHP_VERSION}-xdebug"
+  "php${LAMP_PHP_VERSION}-xml"
+  "php${LAMP_PHP_VERSION}-zip"
 )
 
 LAMP_PHP_VERSIONS=(
