@@ -1,4 +1,4 @@
-# **L**inux **A**pache **M**ariaDB **P**HP
+# (L)inux (A)pache (M)ariaDB (P)HP
 
 > Currently in development, use it with care and at your own risk.
 
