@@ -16,3 +16,7 @@ LAMP_CONFIG_PHP_VERSION=""
 LAMP_CONFIG_VIRTUALHOSTS_DIRECTORY=""
 # Default language for phpMyAdmin
 LAMP_CONFIG_PMA_LANG=""
+# Cron type to execute the auto update.
+# Possible values: hourly, daily, weekly, monthly
+# Default value is daily
+# LAMP_CONFIG_PMA_CRON_UPGRADE=""

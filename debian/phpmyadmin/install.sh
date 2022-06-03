@@ -6,13 +6,19 @@ LAMP_PMA_LANG="${LAMP_CONFIG_PMA_LANG:-}"
 [ -z "$LAMP_PMA_LANG" ] && LAMP_PMA_LANG=`echo $LANG | awk -F'_' '{print $1}'`
 [ -z "$LAMP_PMA_LANG" ] && LAMP_PMA_LANG=en
 
-cp -f "${LAMP_DISTRO_PATH}/phpmyadmin/phpmyadmin.sh" /etc/cron.monthly/phpmyadmin.sh
-sed -i "s/PMA_LANG/${LAMP_PMA_LANG}/" /etc/cron.monthly/phpmyadmin.sh
-chmod +x /etc/cron.monthly/phpmyadmin.sh
+LAMP_PMA_CRON_UPGRADE="${LAMP_CONFIG_PMA_CRON_UPGRADE:-daily}"
+if ! in_array "${LAMP_PMA_CRON_UPGRADE}" hourly daily weekly monthly; then
+  LAMP_PMA_CRON_UPGRADE=daily
+fi
+
+rm -f /etc/cron.{hourly,daily,weekly,monthly}/phpmyadmin.sh
+cp -f "${LAMP_DISTRO_PATH}/phpmyadmin/phpmyadmin.sh" "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
+sed -i "s/PMA_LANG/${LAMP_PMA_LANG}/" "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
+chmod +x "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
 if [[ ! -d /var/www/html/phpmyadmin ]]; then
   echo "Installing phpMyAdmin"
   PMA_PASSWORD=`pwgen -svB 16 1`
-  bash /etc/cron.monthly/phpmyadmin.sh
+  bash "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
   (
     echo "CREATE DATABASE IF NOT EXISTS phpmyadmin DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;"
     echo "DROP USER IF EXISTS 'pma'@'localhost';"
@@ -26,5 +32,5 @@ if [[ ! -d /var/www/html/phpmyadmin ]]; then
   sed -i "s/PMA_PASSWORD/${PMA_PASSWORD}/" /var/www/html/phpmyadmin/config.inc.php
 else
   echo "Updating phpMyAdmin"
-  bash /etc/cron.monthly/phpmyadmin.sh
+  bash "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
 fi
