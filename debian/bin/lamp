@@ -194,9 +194,15 @@ function disable_domain() {
 }
 
 function usage() {
-  echo "Usage: sudo lamp [option] domain@database domain..."
+  echo "Usage: lamp [help|show]"
+  echo "       sudo lamp restart [service name]"
+  echo "       sudo lamp [option] domain@database domain..."
   echo
   echo "OPTIONS:"
+  echo " restart - Restart all services or service if defined"
+  echo "           Since the service name for php-fpm is unique for each version"
+  echo "           you can specify php as the service name and all will be restarted."
+  echo "           Also support multiples services."
   echo " create  - Create or recreate if exists the VirtualHost for domain"
   echo "    -db  -- Create database if not exists, if you do not specify it used the domain"
   echo "   -php  -- Define the php version to use, if not installed use the latest version."
@@ -219,8 +225,26 @@ function usage() {
   exit
 }
 
+function restart_service() {
+  if [[ $# -eq 0 ]]; then
+    systemctl restart apache2 mysql
+    restart_service php
+  else
+    while [[ $# -gt 0 ]]; do
+      if [[ "php" == "$1" ]]; then
+        find /lib/systemd/system/ -name "php*-fpm*" -exec basename {} \; | xargs -r systemctl restart
+      else
+        systemctl restart $1
+      fi
+      shift
+    done
+  fi
+  exit
+}
+
 ACTION=help
 ACTIONS=(
+  restart
   create
   delete
   enable
@@ -242,6 +266,8 @@ if [ `id -u` -ne 0 ]; then
   echo "Please, run this with the root user or sudo."
   exit 1
 fi
+
+[ "$ACTION" == "restart" ] && restart_service $@
 
 "${ACTION}_domain" $@
 
