@@ -19,4 +19,8 @@ LAMP_CONFIG_PMA_LANG=""
 # Cron type to execute the auto update.
 # Possible values: hourly, daily, weekly, monthly
 # Default value is daily
-# LAMP_CONFIG_PMA_CRON_UPGRADE=""
+LAMP_CONFIG_PMA_CRON_UPGRADE=""
+# MariaDB version
+# See available version in https://mariadb.org
+# Default value is 10.8 ( checked in June 2022 )
+LAMP_CONFIG_MARIADB_VERSION=""
