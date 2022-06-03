@@ -14,6 +14,7 @@ LAMP_PHP_PACKAGES=(
   "php${LAMP_PHP_VERSION}-curl"
   "php${LAMP_PHP_VERSION}-gd"
   "php${LAMP_PHP_VERSION}-imagick"
+  "php${LAMP_PHP_VERSION}-intl"
   "php${LAMP_PHP_VERSION}-mbstring"
   "php${LAMP_PHP_VERSION}-mysql"
   "php${LAMP_PHP_VERSION}-soap"
@@ -23,8 +24,9 @@ LAMP_PHP_PACKAGES=(
 )
 
 LAMP_PHP_VERSIONS=(
-  8.0
-  7.4
+  "8.1"
+  "8.0"
+  "7.4"
 )
 
 for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
