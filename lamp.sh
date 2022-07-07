@@ -61,7 +61,7 @@ if [[ -f "$LAMP_PATH/config.sh" ]]; then
 fi
 
 LAMP_FQDN=`hostname -f`
-[ -n "$LAM_CONFIG_FQDN" ] && LAMP_FQDN="$LAMP_CONFIG_FQDN"
+[ -n "$LAMP_CONFIG_FQDN" ] && LAMP_FQDN="$LAMP_CONFIG_FQDN"
 LAMP_FQDN_EXPANDED=( $(echo $LAMP_FQDN | tr '.' ' ') )
 if [[ ${#LAMP_FQDN_EXPANDED[@]} -lt 2 ]]; then
   echo "Invalid FQDN, declare the LAMP_CONFIG_FQDN option with the valid domain or configure the valid FQDN in the OS."
