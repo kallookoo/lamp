@@ -68,7 +68,7 @@ fi
 if [ "$ACTION" == "upgrade" ]; then
   [ -d /opt/mkcert ] && echo -n "Upgrading" || echo -n "Installing"
   echo " the mkcert binary"
-  LAMP_MKCERT_URL=`wget -q -O- "https://api.github.com/repos/FiloSottile/mkcert/releases/latest" | grep -m 1 "browser_download_url.*linux-amd64" | cut -d '"' -f 4`
+  LAMP_MKCERT_URL=`wget -q -O- "https://api.github.com/repos/FiloSottile/mkcert/releases/latest" | grep -m 1 "browser_download_url.*linux-$(uname -r | awk -F'-' '{print $(NF)}')" | cut -d '"' -f 4`
   LAMP_MKCERT=`echo $LAMP_MKCERT_URL | awk -F'/' '{print $(NF)}'`
   if [ -z "$LAMP_MKCERT" ]; then
     echo "Some problem occurred when trying to get the mkcert binary."
