@@ -102,6 +102,9 @@ if [[ "$LAMP_TLD" != "localhost" ]]; then
 	fi
 fi
 
+# shellcheck disable=SC2034
+LAMP_ARCH="$(uname -r | awk -F'-' '{print $(NF)}')"
+
 include system
 include mkcert
 include repositories
