@@ -227,8 +227,8 @@ function usage() {
 
 function restart_service() {
   if [[ $# -eq 0 ]]; then
-    systemctl restart apache2 mysql
     restart_service php
+    systemctl restart mailhog mysql apache2
   else
     while [[ $# -gt 0 ]]; do
       if [[ "php" == "$1" ]]; then
