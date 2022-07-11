@@ -11,12 +11,20 @@ for x in "${PPA_REPOSITORIES[@]}"; do
   fi
 done; unset x
 
-if [ ! -f /etc/apt/sources.list.d/mariadb.list ]; then
+LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.8}"
+if [ ! -f "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" ]; then
+  curl -sI "https://archive.mariadb.org/mariadb-${LAMP_MARIADB_VERSION}" | grep -q "200 Found"
+  if [[ $? -eq 0 ]]; then
+    echo "Invalid MariaDB ${LAMP_MARIADB_VERSION} version"
+    exit 1
+  fi
+
+  find /etc/apt/sources.list.d -type f -name "mariadb*" -delete
   wget -q -O- https://mariadb.org/mariadb_release_signing_key.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/mariadb.gpg
   (
-    echo "deb [arch=amd64,i386] http://ams2.mirrors.digitalocean.com/mariadb/repo/10.6/ubuntu $LAMP_CODENAME main"
-  ) | tee /etc/apt/sources.list.d/mariadb.list &>/dev/null
+    echo "deb https://archive.mariadb.org/mariadb-${LAMP_MARIADB_VERSION}/repo/ubuntu $LAMP_CODENAME main"
+  ) | tee "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" &>/dev/null
 fi
 
 echo "Check and upgrade packages"
-LANG= apt update 2>&1 | grep -q "packages can be upgraded" && apt -y full-upgrade
+LANG=; apt update 2>&1 | grep -q "packages can be upgraded" && apt -y full-upgrade
