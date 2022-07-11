@@ -4,7 +4,7 @@
 
 ## Available distros
 
-* Debian (Tested on Debian 11 using Virtualbox and bridge mode)
+* Debian (Tested on Debian 11 installed in Virtual Maquine and using bridge mode)
 * Ubuntu (It is not tested, but it should work perfectly)
 
 ## Packages
@@ -21,7 +21,7 @@
 
 ## Configurations
 
-View and edit [config.sh](config.sh) file to customize installation.
+Copy [config-example.sh](config-example.sh) file to config.sh and edit for customize installation.
 
 ## Commands
 
