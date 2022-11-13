@@ -12,7 +12,7 @@ if [ ! -f /etc/apt/sources.list.d/apache2.list ]; then
   echo "deb https://packages.sury.org/apache2/ $LAMP_CODENAME main" | tee /etc/apt/sources.list.d/apache2.list &>/dev/null
 fi
 
-LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.8}"
+LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.9}"
 if [ ! -f "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" ]; then
   curl -sI "https://archive.mariadb.org/mariadb-${LAMP_MARIADB_VERSION}" | grep -q "200 Found"
   if [[ $? -eq 0 ]]; then
@@ -36,4 +36,4 @@ if [[ -z "$(grep 'contrib' /etc/apt/sources.list | grep -v 'cdrom')" ]]; then
 fi
 
 echo "Check and upgrade packages"
-LANG= apt update 2>&1 | grep -q "packages can be upgraded" && apt -y full-upgrade
+LANG=; apt update 2>&1 | grep -q "packages can be upgraded" && apt -y full-upgrade
