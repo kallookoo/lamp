@@ -1,3 +1,4 @@
+#shellcheck disable=SC2154
 #
 # REPOSITORIES
 #
@@ -16,7 +17,7 @@ LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.9}"
 if [ ! -f "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" ]; then
   curl -sI "https://archive.mariadb.org/mariadb-${LAMP_MARIADB_VERSION}" | grep -q "200 Found"
   if [[ $? -eq 0 ]]; then
-    echo "Invalid MariaDB ${LAMP_MARIADB_VERSION} version"
+    console_log "${LAMP_INCLUDE_NAME}" "Invalid MariaDB ${LAMP_MARIADB_VERSION} version"
     exit 1
   fi
 
@@ -35,5 +36,5 @@ if [[ -z "$(grep 'contrib' /etc/apt/sources.list | grep -v 'cdrom')" ]]; then
   sed -i 's/main/main contrib/' /etc/apt/sources.list
 fi
 
-echo "Check and upgrade packages"
+console_log "${LAMP_INCLUDE_NAME}" "Check and upgrade packages"
 LANG=; apt update 2>&1 | grep -q "packages can be upgraded" && apt -y full-upgrade

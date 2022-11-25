@@ -18,12 +18,13 @@ function validate_domain() {
 }
 
 function show_domains() {
+  local domain
   ls /etc/apache2/sites-available | \
     sed -E 's/\.conf$//g' | \
-      while read domain; do
+      while read -r domain; do
         echo -n "- $domain "
         [ -f "/etc/apache2/sites-enabled/$domain.conf" ] && echo "(Enabled)" || echo "(Disabled)"
-      done; unset domain
+      done
   exit
 }
 

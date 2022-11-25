@@ -1,4 +1,8 @@
-# shellcheck shell=bash
+#shellcheck disable=SC2154
+
+#
+#
+#
 
 echo "postfix postfix/main_mailer_type select Internet Site" | sudo debconf-set-selections
 echo "postfix postfix/mailname string ${LAMP_FQDN}" | sudo debconf-set-selections
@@ -9,8 +13,12 @@ if ! grep -q "postmaster@${LAMP_FQDN}" /etc/aliases; then
   systemctl restart postfix
 fi
 
-( cmd_exists mhsendmail && cmd_exists mailhog ) && echo -n "Updating" || echo -n "Installing"
-echo " MailHog"
+if cmd_exists mhsendmail && cmd_exists mailhog; then
+  console_log "${LAMP_INCLUDE_NAME}" "Updating binary"
+else
+  console_log "${LAMP_INCLUDE_NAME}" "Installing binary"
+fi
+
 systemctl stop mailhog &>/dev/null
 apt_install golang-go
 

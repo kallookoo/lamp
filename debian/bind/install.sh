@@ -2,7 +2,9 @@
 #
 #
 
-if [[ -n "${LAMP_IP_ADDRESS:-}" ]]; then
+if [[ "$LAMP_TLD" == "localhost" ]]; then
+  apt_install libnss-myhostname
+else
   LAMP_DNS_SERIAL="$( date +'%s' )"
 
   apt_install bind9
@@ -17,6 +19,4 @@ if [[ -n "${LAMP_IP_ADDRESS:-}" ]]; then
 
   systemctl restart named
   add_firewall_rule 53
-else
-  apt_install libnss-myhostname
 fi

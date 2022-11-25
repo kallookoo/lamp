@@ -1,8 +1,16 @@
+#shellcheck disable=SC2154
+
 #
 #
 #
 
 mkdir -p /usr/local/bin
+if [ -f /usr/local/bin/lamp ]; then
+  console_log "${LAMP_INCLUDE_NAME}" "Updating lamp binary"
+else
+  console_log "${LAMP_INCLUDE_NAME}" "Installing lamp binary"
+fi
+
 cp -f "$LAMP_DISTRO_PATH/bin/lamp" /usr/local/bin/lamp
 chmod +x /usr/local/bin/lamp
 

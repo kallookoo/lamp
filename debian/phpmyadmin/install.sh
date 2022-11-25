@@ -1,3 +1,5 @@
+#shellcheck disable=SC2154
+
 #
 #
 #
@@ -16,7 +18,7 @@ cp -f "${LAMP_DISTRO_PATH}/phpmyadmin/phpmyadmin.sh" "/etc/cron.${LAMP_PMA_CRON_
 sed -i "s/PMA_LANG/${LAMP_PMA_LANG}/" "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
 chmod +x "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
 if [[ ! -d /var/www/html/phpmyadmin ]]; then
-  echo "Installing phpMyAdmin"
+  console_log "${LAMP_INCLUDE_NAME}" "Installing phpMyAdmin"
   PMA_PASSWORD=`pwgen -svB 16 1`
   bash "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
   (
@@ -31,6 +33,6 @@ if [[ ! -d /var/www/html/phpmyadmin ]]; then
   cp -f "${LAMP_DISTRO_PATH}/phpmyadmin/config.inc.php" /var/www/html/phpmyadmin/config.inc.php
   sed -i "s/PMA_PASSWORD/${PMA_PASSWORD}/" /var/www/html/phpmyadmin/config.inc.php
 else
-  echo "Updating phpMyAdmin"
+  console_log "${LAMP_INCLUDE_NAME}" "Updating phpMyAdmin"
   bash "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
 fi

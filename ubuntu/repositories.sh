@@ -5,11 +5,11 @@
 apt_install software-properties-common
 
 PPA_REPOSITORIES=( "ondrej/apache2" "ondrej/php" )
-for x in "${PPA_REPOSITORIES[@]}"; do
-  if ! grep -q "^deb.*${x}" /etc/apt/sources.list.d/*.list &>/dev/null; then
-    add-apt-repository -y --no-update "ppa:${x}" &>/dev/null
+for PPA_REPOSITORY in "${PPA_REPOSITORIES[@]}"; do
+  if ! grep -q "^deb.*${PPA_REPOSITORY}" /etc/apt/sources.list.d/*.list &>/dev/null; then
+    add-apt-repository -y --no-update "ppa:${PPA_REPOSITORY}" &>/dev/null
   fi
-done; unset x
+done
 
 LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.9}"
 if [ ! -f "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" ]; then
@@ -26,5 +26,6 @@ if [ ! -f "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" ]; then
   ) | tee "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" &>/dev/null
 fi
 
-echo "Check and upgrade packages"
+#shellcheck disable=SC2154
+console_log "${LAMP_INCLUDE_NAME}" "Check and upgrade packages"
 LANG=; apt update 2>&1 | grep -q "packages can be upgraded" && apt -y full-upgrade
