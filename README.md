@@ -13,7 +13,7 @@
 | ------------ | --------------------- |
 | Apache       | 2.4                   |
 | PHP          | Latest, 8.1, 8.0, 7.4 |
-| MariaDB      | 10.8                  |
+| MariaDB      | 10.9                  |
 | phpMyAdmin   | Latest                |
 | Mailhog      | Latest                |
 | mkcert       | Latest                |
