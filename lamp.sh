@@ -15,6 +15,7 @@ if [ -z "$LAMP_DISTRO" ] || [ ! -d "$LAMP_PATH/$LAMP_DISTRO" ]; then
   exit 1
 fi
 
+LAMP_CODENAME="$(get_codename)"
 LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
 
 if [ -f "$LAMP_PATH/config.sh" ]; then
