@@ -45,7 +45,6 @@ for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
     done
   fi
 done
-unset PHP_VERSION PHP_PACKAGE
 
 apt_install php-pear "${LAMP_PHP_PACKAGES[@]}"
 
@@ -53,7 +52,7 @@ phpdismod -s cli xdebug
 
 mkdir -p /etc/ssl
 curl -s https://curl.se/ca/cacert.pem -o /etc/ssl/cacert.pem
-find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >> /etc/ssl/cacert.pem
+find /etc/ssl/certs/ -name "*mkcert*" -exec sh -c 'cat "$1" >> /etc/ssl/cacert.pem' \;
 
 TIME_ZONE=$(timedatectl | awk -F: '/zone/{print $2}' | awk '{print $1}')
 for PHP_VERSION in /etc/php/*; do
@@ -78,10 +77,7 @@ for PHP_VERSION in /etc/php/*; do
         sed -i 's@^error_log.*@error_log = /var/log/php-fpm.log@' "/etc/php/${PHP_VERSION}/fpm/php-fpm.conf"
       fi
     fi
-done;
-
-unset PHP_VERSION PHP_CURL_CERT
-
+done
 
 find /lib/systemd/system/ -name "php*-fpm*" -exec sh -c 'basename "$1" | xargs -r systemctl restart' \;
 mkdir -p /var/www/html
