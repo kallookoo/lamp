@@ -1,4 +1,3 @@
-#shellcheck disable=SC2154
 #
 # REPOSITORIES
 #
@@ -13,10 +12,9 @@ if [ ! -f /etc/apt/sources.list.d/apache2.list ]; then
   echo "deb https://packages.sury.org/apache2/ $LAMP_CODENAME main" | tee /etc/apt/sources.list.d/apache2.list &>/dev/null
 fi
 
-LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.9}"
+LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.10}"
 if [ ! -f "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" ]; then
-  curl -sI "https://archive.mariadb.org/mariadb-${LAMP_MARIADB_VERSION}" | grep -q "200 Found"
-  if [[ $? -eq 0 ]]; then
+  if curl -sI "https://archive.mariadb.org/mariadb-${LAMP_MARIADB_VERSION}" | grep -q "200 Found"; then
     console_log "${LAMP_INCLUDE_NAME}" "Invalid MariaDB ${LAMP_MARIADB_VERSION} version"
     exit 1
   fi
@@ -28,11 +26,11 @@ if [ ! -f "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" ]; then
   ) | tee "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" &>/dev/null
 fi
 
-if [[ -z "$(grep 'non-free' /etc/apt/sources.list | grep -v 'cdrom')" ]]; then
+if grep 'non-free' /etc/apt/sources.list | grep -qv 'cdrom'; then
   sed -i 's/main/main non-free/' /etc/apt/sources.list
 fi
 
-if [[ -z "$(grep 'contrib' /etc/apt/sources.list | grep -v 'cdrom')" ]]; then
+if grep 'contrib' /etc/apt/sources.list | grep -qv 'cdrom'; then
   sed -i 's/main/main contrib/' /etc/apt/sources.list
 fi
 

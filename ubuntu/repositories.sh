@@ -11,7 +11,7 @@ for PPA_REPOSITORY in "${PPA_REPOSITORIES[@]}"; do
   fi
 done
 
-LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.9}"
+LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.10}"
 if [ ! -f "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" ]; then
   curl -sI "https://archive.mariadb.org/mariadb-${LAMP_MARIADB_VERSION}" | grep -q "200 Found"
   if [[ $? -eq 0 ]]; then

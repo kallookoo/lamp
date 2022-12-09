@@ -82,6 +82,7 @@ done;
 
 unset PHP_VERSION PHP_CURL_CERT
 
+
 find /lib/systemd/system/ -name "php*-fpm*" -exec sh -c 'basename "$1" | xargs -r systemctl restart' \;
 mkdir -p /var/www/html
 echo "<?php phpinfo();" > /var/www/html/info.php
