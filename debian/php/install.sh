@@ -52,7 +52,7 @@ phpdismod -s cli xdebug
 
 mkdir -p /etc/ssl
 curl -s https://curl.se/ca/cacert.pem -o /etc/ssl/cacert.pem
-find /etc/ssl/certs/ -name "*mkcert*" -exec sh -c 'cat "$1" >> /etc/ssl/cacert.pem' \;
+find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >> /etc/ssl/cacert.pem
 
 TIME_ZONE=$(timedatectl | awk -F: '/zone/{print $2}' | awk '{print $1}')
 for PHP_VERSION in /etc/php/*; do
