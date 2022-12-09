@@ -9,15 +9,15 @@
 
 ## Packages
 
-| **Packages** | **Version**           |
-| ------------ | --------------------- |
-| Apache       | 2.4                   |
-| PHP          | Latest, 8.1, 8.0, 7.4 |
-| MariaDB      | 10.9                  |
-| phpMyAdmin   | Latest                |
-| Mailhog      | Latest                |
-| mkcert       | Latest                |
-| bind9        | Latest                |
+| **Packages** | **Version**                |
+| ------------ | -------------------------- |
+| Apache       | 2.4                        |
+| PHP          | default and 7.4 and above. |
+| MariaDB      | 10.10                      |
+| phpMyAdmin   | Latest                     |
+| Mailhog      | Latest                     |
+| mkcert       | Latest                     |
+| bind9        | Latest                     |
 
 ## Configurations
 
@@ -25,14 +25,13 @@ Copy [config-example.sh](config-example.sh) file to config.sh and edit for custo
 
 ## Commands
 
-| **Command** | **Description**                                                          |
-| ----------- | ------------------------------------------------------------------------ |
-| mkcert      | For create or delete TLS certificates.                                   |
-| lamp        | For create, delete, enable or disable the domain or restart any service. |
+| **Command** | **Description**                                                        |
+| ----------- | ---------------------------------------------------------------------- |
+| mkcert      | For create or delete TLS certificates.                                 |
+| lamp        | For create, delete, enable, disable the domain or restart any service. |
 
 ## Notes
 
-* The Latest version of PHP is the default version of the distro.
 * The phpMyAdmin, Mailhog and mkcert if installed using the custom script to get the latest version.
 * The mkcert if installed in `/opt/mkcert` and the original mkcert binary if `/opt/mkcert/bin/current`.
 * The bind9 only if installed when the TLD if not the localhost.
