@@ -250,7 +250,7 @@ ACTIONS=(
   "help"
 )
 
-if in_array "${1:-help}" "${ACTIONS[@]}"; then
+if in_array "${1:-empty}" "${ACTIONS[@]}"; then
   ACTION="${1}"
   shift
 fi
