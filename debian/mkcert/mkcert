@@ -5,7 +5,7 @@ MKCERT_DIRECTORY=/opt/mkcert/certificates
 
 # Usage: in_array string ${array[@]}
 function in_array() {
-  [ `printf '%s\n' "${@}" | grep -cx -- "${1}"` -gt 1 ] && return 0
+  [ "$(printf '%s\n' "${@}" | grep -cx -- "${1}")" -gt "1" ] && return 0
   return 1
 }
 
@@ -13,8 +13,10 @@ function in_array() {
 # to prevent use wildcards or subdomains
 # this command always create wildcard certificate
 function validate_domain() {
-  echo $1 | grep -qP "^[\w\-]+\.[\w]+$"
-  [ $? -eq 0 ] && return 0 || echo -e "\e[0;31mInvalid format for '${1}' domain\e[0m"; return 1
+  local domain="${1}"
+  echo "${domain}" | grep -qP "^[\w\-]+\.[\w]+$" && return 0
+  echo -e "\e[0;31mInvalid format for '${domain}' domain\e[0m"
+  return 1
 }
 
 function usage() {
@@ -30,83 +32,71 @@ function usage() {
     echo " show    - List all created certificates"
     echo " help    -  Print this text and exit"
     echo " upgrade - Upgrade the mkcert binary to latest version"
-    exit
 }
 
-function show() {
-  if [ -d "$MKCERT_DIRECTORY" ]; then
-    ls ${MKCERT_DIRECTORY} | awk '{print "- "$0}'
+function upgrade_binary() {
+  local api_url="https://api.github.com/repos/FiloSottile/mkcert/releases/latest"
+  local arch="$(uname -r | awk -F'-' '{print $(NF)}')"
+  local download_url="$(wget -q -O- "${api_url}" | grep -m 1 "browser_download_url.*linux-${arch}" | cut -d '"' -f 4)"
+  local binary_name="$(echo "${download_url}" | awk -F'/' '{print $(NF)}')"
+
+  echo "Upgrading the mkcert binary"
+  if [[ -z "${binary_name}" ]]; then
+    echo "Some problem occurred while querying the api to download the binary."
+  elif [ ! -f "/opt/mkcert/bin/${binary_name}" ]; then
+    mkdir -p /opt/mkcert/bin
+    find /opt/mkcert/bin -iname "*mkcert*" -delete
+    wget -q "${download_url}" -O "/opt/mkcert/bin/${binary_name}"
+    chmod +x "/opt/mkcert/bin/${binary_name}"
+    "/opt/mkcert/bin/${binary_name}" --help &>/dev/null
+    if [[ "$?" -ne "0" ]]; then
+      echo "Some problem occurred while downloading the binary."
+    else
+       ln -sf "/opt/mkcert/bin/${binary_name}" /opt/mkcert/bin/current
+        if [[ ! -d "/opt/mkcert/share" ]]; then
+          /opt/mkcert/bin/current -install &>/dev/null
+        fi
+    fi
   fi
-  exit
 }
 
-ACTION=help
+ACTION="help"
 ACTIONS=(
-  create
-  delete
-  upgrade
-  help
-  show
+  "create"
+  "delete"
+  "upgrade"
+  "help"
+  "show"
 )
 
-[ $# -gt 0 ] || usage
-if validate_domain "${1}" &>/dev/null; then
-  ACTION=create
-elif in_array "${1}" ${ACTIONS[@]}; then
+if in_array "${1:-empty}" "${ACTIONS[@]}"; then
   ACTION="${1}"
   shift
 fi
 
-[ "$ACTION" == "help" ] && usage
-[ "$ACTION" == "show" ] && show
-
-if [ `id -u` -ne 0 ]; then
-  echo "Please, run this with the root user or sudo."
-  exit 1
-fi
-
-if [ "$ACTION" == "upgrade" ]; then
-  [ -d /opt/mkcert ] && echo -n "Upgrading" || echo -n "Installing"
-  echo " the mkcert binary"
-  LAMP_MKCERT_URL=`wget -q -O- "https://api.github.com/repos/FiloSottile/mkcert/releases/latest" | grep -m 1 "browser_download_url.*linux-$(uname -r | awk -F'-' '{print $(NF)}')" | cut -d '"' -f 4`
-  LAMP_MKCERT=`echo $LAMP_MKCERT_URL | awk -F'/' '{print $(NF)}'`
-  if [ -z "$LAMP_MKCERT" ]; then
-    echo "Some problem occurred when trying to get the mkcert binary."
-    exit 1
-  elif [ ! -f "/opt/mkcert/bin/$LAMP_MKCERT" ]; then
-    mkdir -p /opt/mkcert/bin
-    find /opt/mkcert/bin -iname "*mkcert*" -delete
-    wget -q "$LAMP_MKCERT_URL" -O "/opt/mkcert/bin/$LAMP_MKCERT"
-    chmod +x "/opt/mkcert/bin/$LAMP_MKCERT"
+if [[ "$ACTION" == "help" ]]; then
+  usage
+elif [[ "$ACTION" == "show" ]]; then
+  if [ -d "$MKCERT_DIRECTORY" ]; then
+    find "$MKCERT_DIRECTORY" -maxdepth 1 -type f | awk -F"/" '{print "- "$NF}'
   fi
-  ln -sf "/opt/mkcert/bin/$LAMP_MKCERT" /opt/mkcert/bin/current
-  [ -d "/opt/mkcert/share" ] || /opt/mkcert/bin/current -install &>/dev/null
-  exit
-fi
-
-[ -d "${MKCERT_DIRECTORY}" ] || mkdir -p "${MKCERT_DIRECTORY}"
-if [ "$ACTION" == "delete" ]; then
-  while [ $# -gt 0 ]; do
-    DOMAIN="${1}"
-    if validate_domain "${DOMAIN}"; then
-      echo -n "Deleting "${DOMAIN}" domain certificate"
-      find ${MKCERT_DIRECTORY} -type f -name "${DOMAIN}*" -delete 2>/dev/null
-      [ $? -eq 0 ] && echo -e " \e[0;32m[DONE]\e[0m" || echo -e " \e[0;31m[FAILED]\e[0m"
-    fi
-    shift
-  done
-elif [ "$ACTION" == "create" ]; then
-  while [ $# -gt 0 ]; do
-    DOMAIN="${1}"
-    if validate_domain "${DOMAIN}"; then
-      echo -n "Creating "${DOMAIN}" domain certificate"
-      /opt/mkcert/bin/current -ecdsa -cert-file "${MKCERT_DIRECTORY}/${DOMAIN}.pem" -key-file "${MKCERT_DIRECTORY}/${DOMAIN}.key" "${DOMAIN}" "*.${DOMAIN}" &>/dev/null
-      if [[ $? -eq 0 ]]; then
-        cat "${MKCERT_DIRECTORY}/${DOMAIN}.pem" | tee -a "${MKCERT_DIRECTORY}/${DOMAIN}.key" &>/dev/null
-        mv "${MKCERT_DIRECTORY}/${DOMAIN}.key" "${MKCERT_DIRECTORY}/${DOMAIN}.pem"
-        echo -e " \e[0;32m[DONE]\e[0m"
-      else
-        echo -e " \e[0;31m[FAILED]\e[0m"
+elif [[ "$(id -u)" -ne "0" ]]; then
+  echo "Please, run this with the root user or sudo."
+elif [[ "$ACTION" == "upgrade" ]]; then
+  upgrade_binary
+elif [[ "$#" -gt "0" ]]; then
+  mkdir -p "${MKCERT_DIRECTORY}"
+  while [[ "$#" -gt "0" ]]; do
+    if validate_domain "${1}"; then
+      if [[ "$ACTION" == "create" ]]; then
+        echo "Creating ${1} domain certificate"
+        if /opt/mkcert/bin/current -ecdsa -cert-file "${MKCERT_DIRECTORY}/${1}.pem" -key-file "${MKCERT_DIRECTORY}/${1}.key" "${1}" "*.${1}" &>/dev/null; then
+          tee -a "${MKCERT_DIRECTORY}/${1}.key" &>/dev/null < "${MKCERT_DIRECTORY}/${1}.pem"
+          mv "${MKCERT_DIRECTORY}/${1}.key" "${MKCERT_DIRECTORY}/${1}.pem"
+        fi
+      elif [[ "$ACTION" == "delete" ]]; then
+        echo "Deleting ${1} domain certificate"
+        rm -f "${MKCERT_DIRECTORY}/${1}.pem"
       fi
     fi
     shift
