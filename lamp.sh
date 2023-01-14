@@ -19,12 +19,13 @@ if [ -f "$LAMP_PATH/config.sh" ]; then
   . "$LAMP_PATH/config.sh"
 fi
 
-#shellcheck disable=SC2034
-LAMP_CODENAME="$(get_codename)"
 LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
 
-LAMP_FQDN="$(hostname -f)"
-[ -n "$LAMP_CONFIG_FQDN" ] && LAMP_FQDN="$LAMP_CONFIG_FQDN"
+if [[ -n "$LAMP_CONFIG_FQDN" ]]; then
+  LAMP_FQDN="$LAMP_CONFIG_FQDN"
+else
+  LAMP_FQDN="$(hostname -f)"
+fi
 
 IFS=" " read -r -a LAMP_FQDN_EXPANDED <<< "$(echo "$LAMP_FQDN" | tr '.' ' ')"
 if [[ ${#LAMP_FQDN_EXPANDED[@]} -gt 2 ]]; then
@@ -56,7 +57,7 @@ else
   else
     IFS=" " read -r -a LAMP_IP_ADDRESSES <<< "$(hostname -I)"
   fi
-  if [[ "${#LAMP_IP_ADDRESSES[@]}" -lt 1 ]]; then
+  if [[ ${#LAMP_IP_ADDRESSES[@]} -lt 1 ]]; then
     console_log lamp  "Missing IP, declare the LAMP_CONFIG_IP_ADDRESS option to select the correct IP"
     exit 1
   elif [[ ${#LAMP_IP_ADDRESSES[@]} -ne 1 ]]; then
@@ -65,7 +66,7 @@ else
     exit 1
   fi
   LAMP_IP_ADDRESS="${LAMP_IP_ADDRESSES[0]}"
-  if ! echo "${LAMP_IP_ADDRESS}" | grep -Eq '^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$'; then
+  if ! echo "${LAMP_IP_ADDRESS}" | grep -qP '^([0-9]{1,3}\.){3}([0-9]{1,3})$'; then
     console_log lamp  "Invalid IP Address, only support IP v4"
 		exit 1
 	fi
@@ -73,20 +74,20 @@ else
   console_log lamp "The IP for lamp is: $LAMP_IP_ADDRESS"
 fi
 
-console_log lamp "The Public IP for lamp is: $(wget -q -O - ipinfo.io/ip)"
+console_log lamp "The Public IP for lamp is: $(wget -q -O - https://ipinfo.io/ip)"
 
 LAMP_INCLUDE_NAMES=(
-  system
-  mkcert
-  repositories
-  memcached
-  php
-  apache
-  mariadb
-  phpmyadmin
-  mailhog
-  bind
-  bin
+  "system"
+  "mkcert"
+  "repositories"
+  "memcached"
+  "php"
+  "apache"
+  "mariadb"
+  "phpmyadmin"
+  "mailhog"
+  "bind"
+  "bin"
 )
 
 for LAMP_INCLUDE_NAME in "${LAMP_INCLUDE_NAMES[@]}"; do
