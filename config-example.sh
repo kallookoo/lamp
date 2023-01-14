@@ -12,6 +12,9 @@
 # LAMP_CONFIG_TLD=""
 # # Define the IP to use to configure the bind9
 # LAMP_CONFIG_IP_ADDRESS=""
+# # Bind9 forwarders
+# # By default is disabled it.
+# # LAMP_CONFIG_BIND_FORWARDERS="1.1.1.1 1.0.0.1"
 # # Default version of PHP
 # LAMP_CONFIG_PHP_VERSION=""
 # # Directory to use for all domains ( virtualhosts )
