@@ -2,6 +2,8 @@
 #
 #
 
+LAMP_CODENAME="$(get_codename)"
+
 apt_install software-properties-common
 
 PPA_REPOSITORIES=( "ondrej/apache2" "ondrej/php" )

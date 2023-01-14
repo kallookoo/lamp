@@ -2,6 +2,8 @@
 # REPOSITORIES
 #
 
+LAMP_CODENAME="$(get_codename)"
+
 if [ ! -f /etc/apt/sources.list.d/php.list ]; then
   wget -q https://packages.sury.org/php/apt.gpg -O /etc/apt/trusted.gpg.d/php.gpg
   echo "deb https://packages.sury.org/php/ $LAMP_CODENAME main" | tee /etc/apt/sources.list.d/php.list &>/dev/null
