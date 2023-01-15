@@ -55,13 +55,14 @@ function create_domain() {
         ;;
       -php )
         if ! echo "${2:-}" | grep -qE '^[0-9]\.[0-9]$'; then
-          echo -e "\e[0;31mInvalid format to define PHP version, using the default.\e[0m"
-          exit 1
-        fi
-        if [[ ! -f "/etc/php/${2}/fpm/pool.d/user.conf" ]]; then
-          echo -e "\e[0;31mThe PHP ${2} version is not installed, using the default.\e[0m"
+          echo -e "\e[0;31mThe default version of PHP will be used.\e[0m"
         else
-          php_version="${2}"
+          if [[ ! -f "/etc/php/${2}/fpm/pool.d/user.conf" ]]; then
+            echo -e "\e[0;31mThe PHP ${2} version is not installed, using the default.\e[0m"
+          else
+            php_version="${2}"
+          fi
+          shift
         fi
         shift
         ;;
@@ -207,7 +208,8 @@ function usage() {
   echo "           Also support multiples services."
   echo " create  - Create or recreate if exists the VirtualHost for domain"
   echo "    -db  -- Creates a database, if not specified the domain is used"
-  echo "   -php  -- Define the php version to use, if not installed use the default version."
+  echo "   -php  -- Define the php version."
+  echo "            If it is not installed or specified then the default will be used."
   echo " delete  - Delete the VirtualHost for domain"
   echo "    -db  -- Delete the database, if you do not specify it used the domain."
   echo " enable  - Enable the VirtualHost for domain"
