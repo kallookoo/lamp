@@ -57,6 +57,7 @@ find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >> /etc/ssl/cacert.pem
 
 TIME_ZONE=$(timedatectl | awk -F: '/zone/{print $2}' | awk '{print $1}')
 for PHP_VERSION in /etc/php/*; do
+    PHP_VERSION="$(basename "${PHP_VERSION}")"
     if [[ -d "/etc/php/${PHP_VERSION}/fpm" ]]; then
       rsync -azh "${LAMP_DISTRO_PATH}/php/fpm/" "/etc/php/${PHP_VERSION}/fpm/"
       if [[ -f "/usr/lib/php/${PHP_VERSION}/php.ini-development" ]]; then
