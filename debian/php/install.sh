@@ -82,4 +82,4 @@ done
 
 find /lib/systemd/system/ -name "php*-fpm*" -exec sh -c 'basename "$1" | xargs -r systemctl restart' \;
 mkdir -p /var/www/html
-echo "<?php phpinfo();" > /var/www/html/info.php
+cp -f "${LAMP_DISTRO_PATH}/php/info.php" /var/www/html/info.php
