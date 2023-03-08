@@ -8,9 +8,9 @@ systemctl stop apache2
 LAMP_VIRTUALHOSTS_DIRECTORY="${LAMP_CONFIG_VIRTUALHOSTS_DIRECTORY:-}"
 [ -z "$LAMP_VIRTUALHOSTS_DIRECTORY" ] && LAMP_VIRTUALHOSTS_DIRECTORY="/home/${SUDO_USER}/www/"
 LAMP_VIRTUALHOSTS_DIRECTORY="$(echo "$LAMP_VIRTUALHOSTS_DIRECTORY" | sed -e 's@^/@@' -e 's@/$@@')"
-if [ ! -d "$LAMP_VIRTUALHOSTS_DIRECTORY" ]; then
-  mkdir -p "$LAMP_VIRTUALHOSTS_DIRECTORY"
-  chown -R "$SUDO_USER:$SUDO_USER" "$LAMP_VIRTUALHOSTS_DIRECTORY"
+if [ ! -d "/$LAMP_VIRTUALHOSTS_DIRECTORY" ]; then
+  mkdir -p "/$LAMP_VIRTUALHOSTS_DIRECTORY"
+  chown -R "$SUDO_USER:$SUDO_USER" "/$LAMP_VIRTUALHOSTS_DIRECTORY"
 fi
 
 LAMP_APACHE_MODULES=(
@@ -27,8 +27,7 @@ LAMP_APACHE_MODULES=(
   setenvif
   ssl
 )
-a2enmod -q ${LAMP_APACHE_MODULES[@]}
-
+a2enmod -q "${LAMP_APACHE_MODULES[@]}"
 
 find /var/log/apache2 /etc/apache2/conf-enabled -mindepth 1 -delete
 find /etc/apache2/sites-enabled /etc/apache2/sites-available -mindepth 1 -name "*default*" -delete
