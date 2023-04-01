@@ -14,7 +14,7 @@ if [ ! -f /etc/apt/sources.list.d/apache2.list ]; then
   echo "deb https://packages.sury.org/apache2/ $LAMP_CODENAME main" | tee /etc/apt/sources.list.d/apache2.list &>/dev/null
 fi
 
-LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.10}"
+LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.11}"
 if [ ! -f "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" ]; then
   if curl -sI "https://archive.mariadb.org/mariadb-${LAMP_MARIADB_VERSION}" | grep -q "200 Found"; then
     console_log "${LAMP_INCLUDE_NAME}" "Invalid MariaDB ${LAMP_MARIADB_VERSION} version"

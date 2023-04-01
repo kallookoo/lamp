@@ -27,5 +27,5 @@
 # LAMP_CONFIG_PMA_CRON_UPGRADE=""
 # # MariaDB version
 # # See available version in https://mariadb.org
-# # Default value is 10.10 ( checked in December 2022 )
+# # Default value is 10.11 ( checked in April 2023 )
 # LAMP_CONFIG_MARIADB_VERSION=""

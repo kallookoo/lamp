@@ -5,14 +5,12 @@ default-character-set   = utf8mb4
 default-character-set   = utf8mb4
 
 [mysqld]
-skip-name-resolve       = 1
-skip-networking         = 1
-bind-address            = 127.0.0.1
-max_allowed_packet      = 256M
+skip-name-resolve
+max_allowed_packet      = 512M
 query_cache_size        = 104857600
 query_cache_type        = 1
 query_cache_limit       = 1048576
-innodb_buffer_pool_size = 256M
+innodb_buffer_pool_size = 512M
 innodb_file_per_table   = 1
 character-set-server    = utf8mb4
 collation-server        = utf8mb4_unicode_520_ci
@@ -20,4 +18,4 @@ character_set_server    = utf8mb4
 collation_server        = utf8mb4_unicode_520_ci
 
 [mysqldump]
-max_allowed_packet      = 256M
+max_allowed_packet      = 512M
