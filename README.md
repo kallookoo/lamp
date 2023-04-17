@@ -12,8 +12,8 @@
 | **Packages** | **Version**                |
 | ------------ | -------------------------- |
 | Apache       | 2.4                        |
-| PHP          | default and 7.4 and above. |
-| MariaDB      | 10.10                      |
+| PHP          | 7.4 and above.             |
+| MariaDB      | 10.11                      |
 | phpMyAdmin   | Latest                     |
 | Mailhog      | Latest                     |
 | mkcert       | Latest                     |
@@ -25,10 +25,10 @@ Copy [config-example.sh](config-example.sh) file to config.sh and edit for custo
 
 ## Commands
 
-| **Command** | **Description**                                                        |
-| ----------- | ---------------------------------------------------------------------- |
-| mkcert      | For create or delete TLS certificates.                                 |
-| lamp        | For create, delete, enable, disable the domain or restart any service. |
+| **Command** | **Description**                                                    |
+| ----------- | ------------------------------------------------------------------ |
+| mkcert      | Create or delete TLS certificates.                                 |
+| lamp        | Create, delete, enable, disable the domain or restart any service. |
 
 ## Notes
 
