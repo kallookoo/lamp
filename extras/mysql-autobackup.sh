@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 
-if [[ "$(id -u)" -ne "0" ]]; then
+if [[ "$(id -u)" -ne "0" ]]
+then
   echo "Please, run this with the root user or sudo."
-  exit 1
+  # exit 1
 fi
 
 MYSQL_DIRECTORY="${1:-}"
-if [ -z "$MYSQL_DIRECTORY" ]; then
+if [ -z "$MYSQL_DIRECTORY" ]
+then
   echo "Undefined directory arguments"
   echo "Usage: mysql-autobackup.sh directory"
   exit 1
 fi
-#shellcheck disable=SC2001
-MYSQL_DIRECTORY="$(echo "$MYSQL_DIRECTORY" | sed -e 's@/$@@')"
-if [ ! -d "$MYSQL_DIRECTORY" ]; then
+
+MYSQL_DIRECTORY="${MYSQL_DIRECTORY%*/}"
+if [ ! -d "$MYSQL_DIRECTORY" ]
+then
   mkdir -p "$MYSQL_DIRECTORY"
 fi
 
@@ -31,11 +34,10 @@ MYSQL_EXCLUDE_DATABASES=(
   sys
 )
 
-for database in $(mysql -se 'show databases;' | grep -v 'Database'); do
-  if in_array "$database" "${MYSQL_EXCLUDE_DATABASES[@]}"; then
-    continue
-  elif [ -f "$MYSQL_DIRECTORY/$database.sql" ]; then
-    gzip -fk9 "$MYSQL_DIRECTORY/$database.sql"
+for database in $(mysql -sNe 'show databases;')
+do
+  if ! in_array "$database" "${MYSQL_EXCLUDE_DATABASES[@]}"
+  then
+     mysqldump --databases "$database" | gzip -k9 > "$MYSQL_DIRECTORY/$database.sql.gz"
   fi
-  mysqldump --databases "$database" > "$MYSQL_DIRECTORY/$database.sql"
 done
