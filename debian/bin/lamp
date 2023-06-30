@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
-# Uncomment for debug
-# set -x
+# Enable script debug
+if [[ "${1:-no}" == "-v" ]]; then
+  shift
+  set -x
+fi
 
 # Usage: in_array string ${array[@]}
 function in_array() {
@@ -221,6 +224,7 @@ function usage() {
   echo "* The domain cannot contain the TLD, the previously configured TLD is automatically included."
   echo "* Use \"/VIRTUALHOSTS_DIR/domain.LAMP_TLD\" for the DocumentRoot and create the directory if not exists."
   echo "* You can create separate subdomains but because the mkcert does not support it, the certificate will be created for the domain."
+  echo "* Use -v as the first argument to enable debugging of the bash script."
 }
 
 function restart_service() {
