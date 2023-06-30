@@ -232,7 +232,7 @@ function restart_service() {
   while [[ "$#" -gt "0" ]]; do
     if [[ "php" == "$1" ]]; then
       for name in /lib/systemd/system/php*fpm.service; do
-        restart_service "$(basename "$name")"
+        systemctl restart "$(basename "$name")"
       done
     else
       systemctl restart "$1"
