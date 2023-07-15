@@ -6,22 +6,24 @@
 # Uncomment the variable and define the value
 #
 
-# # Custom domain for lamp
+# Fully Qualified Domain Name (FQDN) for lamp
 # LAMP_CONFIG_FQDN=""
-# # Custom TLD to use
+# TLD used instead of extracting it from the OS
+# Note: Not used if the LAMP_CONFIG_FQDN is set.
 # LAMP_CONFIG_TLD=""
-# # Define the IP to use to configure the bind9
+# Define the IP v4 to use to configure the bind9
+# Note: Only used if the TLD is not localhost
 # LAMP_CONFIG_IP_ADDRESS=""
-# # Bind9 forwarders
-# # By default is disabled it.
-# # LAMP_CONFIG_BIND_FORWARDERS="1.1.1.1 1.0.0.1"
-# # Default version of PHP
+# Bind9 forwarders
+# Note: By default is disabled it.
+# LAMP_CONFIG_BIND_FORWARDERS="1.1.1.1 1.0.0.1"
+# Default version of PHP
 # LAMP_CONFIG_PHP_VERSION=""
-# # Directory to use for all domains ( virtualhosts )
+# Directory to use for all domains ( virtualhosts )
 # LAMP_CONFIG_VIRTUALHOSTS_DIRECTORY=""
 # # Default language for phpMyAdmin
 # LAMP_CONFIG_PMA_LANG=""
-# # Cron type to execute the auto update.
+# # phpMyAdmin Cron type to execute the auto update.
 # # Possible values: hourly, daily, weekly, monthly
 # # Default value is daily
 # LAMP_CONFIG_PMA_CRON_UPGRADE=""
