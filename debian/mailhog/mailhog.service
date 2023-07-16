@@ -4,7 +4,7 @@ After=syslog.target network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/mailhog -storage maildir -maildir-path /mailhog
+ExecStart=/usr/local/bin/MailHog -storage maildir -maildir-path /mailhog
 StandardOutput=journal
 Restart=on-failure
 

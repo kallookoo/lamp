@@ -13,7 +13,7 @@ if ! grep -q "postmaster@${LAMP_FQDN}" /etc/aliases; then
   systemctl restart postfix
 fi
 
-if cmd_exists mhsendmail && cmd_exists mailhog; then
+if cmd_exists mhsendmail && cmd_exists MailHog; then
   console_log "${LAMP_INCLUDE_NAME}" "Updating binary"
 else
   console_log "${LAMP_INCLUDE_NAME}" "Installing binary"
@@ -22,17 +22,23 @@ fi
 systemctl stop mailhog &>/dev/null
 apt_install golang-go
 
-# Build and Install with custom GOPATH to clean after is installed
+# Build and Install with custom GO enviroment to clean after is installed
 (
   export GOPATH="/tmp/lamp-go"
-  go get github.com/mailhog/MailHog
-  cp -f "${GOPATH}/bin/MailHog" /usr/local/bin/mailhog
-  chmod +x /usr/local/bin/mailhog
+  export GOCACHE="${GOPATH}/lamp-go/go-cache"
+  export GOBIN=/usr/local/bin
 
-  go get github.com/mailhog/mhsendmail
-  cp -f "${GOPATH}/bin/mhsendmail" /usr/local/bin/mhsendmail
-  chmod +x /usr/local/bin/mhsendmail
-  rm -rf "${GOPATH}"
+  if [[ "$(go version | grep -oP '[0-9]\.[0-9]{2}' | sed 's/\.//')" -lt "117" ]]
+  then
+    go get github.com/mailhog/MailHog
+    go get github.com/mailhog/mhsendmail
+  else
+    go install github.com/mailhog/MailHog@latest
+    go install github.com/mailhog/mhsendmail@latest
+  fi
+
+  # Delete deprecated executable and go files
+  rm -rf /usr/local/bin/mailhog "${GOPATH}"
 )
 
 cp -f "${LAMP_DISTRO_PATH}/mailhog/mailhog.service" /lib/systemd/system/mailhog.service
