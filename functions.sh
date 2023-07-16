@@ -8,12 +8,7 @@ function in_array() {
   return 1
 }
 
-function is_true() {
-  echo "${1}" | grep -qiE "^y(es)?|0|true" && return 0
-  return 1
-}
-
-function cmd_exists() {
+function command_exists() {
   command -v "${1}" >/dev/null 2>&1
   return $?
 }
@@ -23,50 +18,50 @@ function github_download_url() {
 }
 
 function include() {
+  local name="${1}"
   # shellcheck disable=SC1090
-  if [ -f "$LAMP_DISTRO_PATH/$1/install.sh" ]; then
-    . "$LAMP_DISTRO_PATH/$1/install.sh"
-  elif [ -f "$LAMP_DISTRO_PATH/$1.sh" ]; then
-    . "$LAMP_DISTRO_PATH/$1.sh"
-  elif [ "repositories" != "$1" ]; then
-    if [ "$LAMP_DISTRO" == "ubuntu" ]; then
-      LAMP_DISTRO="debian"
-      LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
+  if [ -f "${LAMP_DISTRO_PATH}/${name}/install.sh" ]
+  then
+    source "${LAMP_DISTRO_PATH}/${name}/install.sh"
+  elif [ -f "${LAMP_DISTRO_PATH}/${name}.sh" ]
+  then
+    source "${LAMP_DISTRO_PATH}/${name}.sh"
+  elif [ "repositories" != "${name}" ] && [ "$LAMP_DISTRO" == "ubuntu" ]
+  then
+    LAMP_DISTRO="debian"
+    LAMP_DISTRO_PATH="${LAMP_PATH}/${LAMP_DISTRO}"
 
-      include "$1"
+    include "${name}"
 
-      LAMP_DISTRO="ubuntu"
-      LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
-    fi
+    LAMP_DISTRO="ubuntu"
+    LAMP_DISTRO_PATH="${LAMP_PATH}/${LAMP_DISTRO}"
   fi
 }
 
 
 function get_distro() {
-  [ -f /etc/os-release ] && awk -F'[= "]' '/^ID/{print $2}' /etc/os-release
+  [ -f /etc/os-release ] && awk -F'=' '/^ID/{print $2}' /etc/os-release
 }
 
 
 function get_codename() {
-  [ -f /etc/os-release ] && awk -F'[= "]' '/VERSION_CODENAME/{print $2}' /etc/os-release
-}
-
-function get_arch() {
-  uname -r | awk -F'-' '{print $(NF)}'
+  [ -f /etc/os-release ] && awk -F'=' '/VERSION_CODENAME/{print $2}' /etc/os-release
 }
 
 LAMP_HEADER=""
 function console_log() {
-  local header="${1}"
-  shift
-  #shellcheck disable=SC2124
-  local msg="${@}"
+  if [[ $# -gt 1 ]]
+  then
+    local header="${1}"
+    shift
+    header="[ $( echo "${header}" | tr '[:lower:]' '[:upper:]' ) ]"
 
-  header="[ $( echo "${header}" | tr '[:lower:]' '[:upper:]' ) ]"
-
-  if [ "${LAMP_HEADER}" != "${header}" ]; then
-    LAMP_HEADER="${header}"
-    printf "\n%s\n" "${header}"
+    if [ "${LAMP_HEADER}" == "${header}" ]
+    then
+      printf "* %s\n" "${@}"
+    else
+      LAMP_HEADER="${header}"
+      printf "\n%s\n* %s\n" "${header}" "${@}"
+    fi
   fi
-  printf "* %s\n" "${msg}"
 }

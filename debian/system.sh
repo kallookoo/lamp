@@ -20,7 +20,7 @@ function apt_remove() {
 }
 
 function add_firewall_rule() {
-  cmd_exists ufw || return 1
+  command_exists ufw || return 1
   if ! ufw status verbose | grep -qw "$1"; then
     ufw allow "$1"
   fi

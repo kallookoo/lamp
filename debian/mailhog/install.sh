@@ -13,7 +13,7 @@ if ! grep -q "postmaster@${LAMP_FQDN}" /etc/aliases; then
   systemctl restart postfix
 fi
 
-if cmd_exists mhsendmail && cmd_exists MailHog; then
+if command_exists mhsendmail && command_exists MailHog; then
   console_log "${LAMP_INCLUDE_NAME}" "Updating binary"
 else
   console_log "${LAMP_INCLUDE_NAME}" "Installing binary"
