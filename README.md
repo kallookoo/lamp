@@ -4,7 +4,7 @@
 
 ## Available distros
 
-* Debian (Tested on Debian 11 installed in Virtual Maquine and using bridge mode)
+* Debian (Tested on Debian 11 installed in Virtual Maquine)
 * Ubuntu (It is not tested, but it should work perfectly)
 
 ## Packages
@@ -17,7 +17,7 @@
 | phpMyAdmin   | Latest                     |
 | Mailhog      | Latest                     |
 | mkcert       | Latest                     |
-| bind9        | Latest                     |
+| bind9        | System                     |
 
 ## Configurations
 
