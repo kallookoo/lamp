@@ -4,7 +4,7 @@
 
 ## Available distros
 
-* Debian (Tested on Debian 11 installed in Virtual Maquine)
+* Debian (Tested on Debian 11 and 12 installed in Virtual Maquine)
 * Ubuntu (It is not tested, but it should work perfectly)
 
 ## Packages
