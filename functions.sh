@@ -19,22 +19,25 @@ function github_download_url() {
 
 function include() {
   local name="${1}"
-  # shellcheck disable=SC1090
-  if [ -f "${LAMP_DISTRO_PATH}/${name}/install.sh" ]
-  then
-    source "${LAMP_DISTRO_PATH}/${name}/install.sh"
-  elif [ -f "${LAMP_DISTRO_PATH}/${name}.sh" ]
+
+  if [ -f "${LAMP_DISTRO_PATH}/${name}.sh" ]
   then
     source "${LAMP_DISTRO_PATH}/${name}.sh"
-  elif [ "repositories" != "${name}" ] && [ "$LAMP_DISTRO" == "ubuntu" ]
+  elif [ -f "${LAMP_DISTRO_PATH}/${name}/install.sh" ]
   then
-    LAMP_DISTRO="debian"
-    LAMP_DISTRO_PATH="${LAMP_PATH}/${LAMP_DISTRO}"
+    source "${LAMP_DISTRO_PATH}/${name}/install.sh"
+  elif [ "repositories" != "${name}" ]
+  then
+    if [ "$LAMP_DISTRO" == "ubuntu" ]
+    then
+      LAMP_DISTRO="debian"
+      LAMP_DISTRO_PATH="${LAMP_PATH}/${LAMP_DISTRO}"
 
-    include "${name}"
+      include "${name}"
 
-    LAMP_DISTRO="ubuntu"
-    LAMP_DISTRO_PATH="${LAMP_PATH}/${LAMP_DISTRO}"
+      LAMP_DISTRO="ubuntu"
+      LAMP_DISTRO_PATH="${LAMP_PATH}/${LAMP_DISTRO}"
+    fi
   fi
 }
 
@@ -43,10 +46,15 @@ function get_distro() {
   [ -f /etc/os-release ] && awk -F'=' '/^ID/{print $2}' /etc/os-release
 }
 
+function get_distro_id() {
+  [ -f /etc/os-release ] && awk -F'=' '/VERSION_ID/{gsub("\"","",$2);print $2}' /etc/os-release
+}
 
-function get_codename() {
+function get_distro_codename() {
   [ -f /etc/os-release ] && awk -F'=' '/VERSION_CODENAME/{print $2}' /etc/os-release
 }
+
+
 
 LAMP_HEADER=""
 function console_log() {

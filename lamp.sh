@@ -18,6 +18,20 @@ then
   exit 1
 fi
 
+LAMP_DISTRO_CODENAME="$(get_distro_codename)"
+if [ -z "$LAMP_DISTRO_CODENAME" ]
+then
+  echo "Missing distro codename"
+  exit 1
+fi
+
+LAMP_DISTRO_ID="$(get_distro_id)"
+if [ -z "$LAMP_DISTRO_ID" ]
+then
+  echo "Missing distro ID"
+  exit 1
+fi
+
 LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
 
 if [[ -n "$LAMP_CONFIG_FQDN" ]]
@@ -93,7 +107,6 @@ console_log lamp "The Public IP for lamp is: $(wget -q -O - https://ipinfo.io/ip
 LAMP_INCLUDE_NAMES=(
   "system"
   "mkcert"
-  "repositories"
   "memcached"
   "php"
   "apache"

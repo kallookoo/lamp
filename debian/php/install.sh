@@ -5,7 +5,8 @@
 #
 
 LAMP_PHP_VERSION="${LAMP_CONFIG_PHP_VERSION:-}"
-if ! echo "$LAMP_PHP_VERSION" | grep -qwE '[0-9\.]+'; then
+if ! [[ "$LAMP_PHP_VERSION" =~ ^[0-9]\.[0-9]$ ]]
+then
   LAMP_PHP_VERSION=$(apt-cache show php-fpm | grep -m1 -oEw 'php[0-9\.]+' | sed 's/php//')
 fi
 

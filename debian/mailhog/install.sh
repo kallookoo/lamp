@@ -20,7 +20,7 @@ else
 fi
 
 systemctl stop mailhog &>/dev/null
-apt_install golang-go
+apt_install golang-go &>/dev/null
 
 # Build and Install with custom GO enviroment to clean after is installed
 (
@@ -39,7 +39,7 @@ apt_install golang-go
 
   # Delete deprecated executable and go files
   rm -rf /usr/local/bin/mailhog "${GOPATH}"
-)
+) &>/dev/null
 
 cp -f "${LAMP_DISTRO_PATH}/mailhog/mailhog.service" /lib/systemd/system/mailhog.service
 systemctl daemon-reload
