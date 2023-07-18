@@ -6,7 +6,7 @@
 
 echo "postfix postfix/main_mailer_type select Internet Site" | sudo debconf-set-selections
 echo "postfix postfix/mailname string ${LAMP_FQDN}" | sudo debconf-set-selections
-apt_install postfix
+apt_install postfix golang-go
 if ! grep -q "postmaster@${LAMP_FQDN}" /etc/aliases; then
   echo "root: postmaster@${LAMP_FQDN}" >> /etc/aliases
   newaliases
@@ -14,13 +14,11 @@ if ! grep -q "postmaster@${LAMP_FQDN}" /etc/aliases; then
 fi
 
 if command_exists mhsendmail && command_exists MailHog; then
-  console_log "${LAMP_INCLUDE_NAME}" "Updating binary"
+  console_log "${LAMP_INCLUDE_NAME}" "Updating binaries"
+  systemctl stop mailhog
 else
-  console_log "${LAMP_INCLUDE_NAME}" "Installing binary"
+  console_log "${LAMP_INCLUDE_NAME}" "Installing binaries"
 fi
-
-systemctl stop mailhog &>/dev/null
-apt_install golang-go &>/dev/null
 
 # Build and Install with custom GO enviroment to clean after is installed
 (
@@ -37,9 +35,9 @@ apt_install golang-go &>/dev/null
     go install github.com/mailhog/mhsendmail@latest
   fi
 
-  # Delete deprecated executable and go files
-  rm -rf /usr/local/bin/mailhog "${GOPATH}"
-) &>/dev/null
+  # Delete go files and deprecated mailhog binary
+  rm -rf "${GOPATH}" "${GOBIN}/mailhog"
+)
 
 cp -f "${LAMP_DISTRO_PATH}/mailhog/mailhog.service" /lib/systemd/system/mailhog.service
 systemctl daemon-reload
