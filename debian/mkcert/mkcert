@@ -59,7 +59,7 @@ function upgrade_binary() {
       then
         rm -rf "${CAROOT}"
         find /etc/ssl/certs/ -name "*mkcert*" -delete
-        /opt/mkcert/bin/current -install &>/dev/null
+        /opt/mkcert/bin/current -install >/dev/null 2>&1
         mkdir -p /etc/ssl
         wget -q https://curl.se/ca/cacert.pem -O /etc/ssl/cacert.pem
         find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >> /etc/ssl/cacert.pem
@@ -121,9 +121,9 @@ then
         else
           echo "Updating ${CURRENT_DOMAIN} domain certificate"
         fi
-        if /opt/mkcert/bin/current -ecdsa -cert-file "${PEM_FILE}" -key-file "${KEY_FILE}" "${CURRENT_DOMAIN}" "*.${CURRENT_DOMAIN}" &>/dev/null
+        if /opt/mkcert/bin/current -ecdsa -cert-file "${PEM_FILE}" -key-file "${KEY_FILE}" "${CURRENT_DOMAIN}" "*.${CURRENT_DOMAIN}" >/dev/null 2>&1
         then
-          cat "${KEY_FILE}" "${PEM_FILE}" | tee "${PEM_FILE}" &>/dev/null
+          cat "${KEY_FILE}" "${PEM_FILE}" | tee "${PEM_FILE}" >/dev/null 2>&1
         fi
       elif [[ "$ACTION" == "delete" ]]
       then
