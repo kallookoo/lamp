@@ -1,20 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-(
-  VERSION="$(curl -s https://raw.githubusercontent.com/phpmyadmin/phpmyadmin/STABLE/ChangeLog | grep -m1 -oE '[0-9.]+ \([0-9]{4}' | awk '{print $1}')"
-  NAME="phpMyAdmin-${VERSION}-all-languages"
-  TO_CLEAN=1; [ -d "/var/www/html/phpmyadmin" ] && TO_CLEAN=0
-  if [[ ! -f "/var/www/html/phpmyadmin/RELEASE-DATE-${VERSION}" ]]; then
-    (
-      curl -s "https://files.phpmyadmin.net/phpMyAdmin/${VERSION}/${NAME}.tar.xz" -o "/tmp/${NAME}.tar.xz"
-      tar -xf "/tmp/${NAME}.tar.xz" --directory /tmp/
-      rsync -aqz --delete --exclude 'config.inc.php' "/tmp/${NAME}/" /var/www/html/phpmyadmin/
-      rm -rf "/tmp/${NAME}"
-      rm -rf /var/www/html/phpmyadmin/{doc,setup,examples,*.lock,*.json,*.sample.inc.php}
-      rm -rf /var/www/html/phpmyadmin/themes/{metro,original}
-      find /var/www/html/phpmyadmin/locale/ -mindepth 1 -maxdepth 1 -type d ! -name PMA_LANG -exec rm -rf {} \;
-      [ $TO_CLEAN -eq 0 ] && rm -rf /var/www/html/phpmyadmin/sql
-    ) || exit 1
+if wget -q https://raw.githubusercontent.com/phpmyadmin/phpmyadmin/STABLE/ChangeLog -O /tmp/phpMyAdmin-changelog
+then
+  PHPMYADMIN_VERSION="$(grep -m1 -oE '[0-9\.]+ \([0-9]{4}' /tmp/phpMyAdmin-changelog | awk '{print $1}')"
+  if [[ "${PHPMYADMIN_VERSION}" =~ ^[0-9] ]] && [[ ! -f "/var/www/html/phpmyadmin/RELEASE-DATE-${PHPMYADMIN_VERSION}" ]]
+  then
+    PHPMYADMIN_TAR_NAME="phpMyAdmin-${PHPMYADMIN_VERSION}-all-languages"
+    if wget -q "https://files.phpmyadmin.net/phpMyAdmin/${PHPMYADMIN_VERSION}/${PHPMYADMIN_TAR_NAME}.tar.xz" -O "/tmp/${PHPMYADMIN_TAR_NAME}.tar.xz"
+    then
+      tar -xf "/tmp/${PHPMYADMIN_TAR_NAME}.tar.xz" --directory /tmp/ && \
+        rsync -aqz --delete --exclude 'config.inc.php' "/tmp/${PHPMYADMIN_TAR_NAME}/" /var/www/html/phpmyadmin/
+    fi
   fi
-) || exit 1
+fi
+find /tmp -maxdepth 1 -iname "phpmyadmin-*" -exec rm -rf {} \;
 exit 0
