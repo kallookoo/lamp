@@ -13,7 +13,6 @@ fi
 
 rm -f /etc/cron.{hourly,daily,weekly,monthly}/phpmyadmin.sh
 cp -f "${LAMP_DISTRO_PATH}/phpmyadmin/phpmyadmin.sh" "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
-sed -i "s/PMA_LANG/${LAMP_PMA_LANG}/" "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
 chmod +x "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
 if [[ ! -d /var/www/html/phpmyadmin ]]; then
   console_log "${LAMP_INCLUDE_NAME}" "Installing phpMyAdmin"
@@ -27,9 +26,9 @@ if [[ ! -d /var/www/html/phpmyadmin ]]; then
     echo "FLUSH PRIVILEGES;"
   ) | mysql
   mysql < /var/www/html/phpmyadmin/sql/create_tables.sql
-  rm -rf /var/www/html/phpmyadmin/sql
   cp -f "${LAMP_DISTRO_PATH}/phpmyadmin/config.inc.php" /var/www/html/phpmyadmin/config.inc.php
   sed -i "s/PMA_PASSWORD/${PMA_PASSWORD}/" /var/www/html/phpmyadmin/config.inc.php
+  sed -i "s/PMA_LANG/${LAMP_PMA_LANG}/" /var/www/html/phpmyadmin/config.inc.php
 else
   console_log "${LAMP_INCLUDE_NAME}" "Updating phpMyAdmin"
   bash "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"

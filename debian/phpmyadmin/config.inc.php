@@ -21,6 +21,7 @@ $cfg['VersionCheck']                  = false;
 $cfg['QueryHistoryDB']                = true;
 $cfg['Export']['method']              = 'custom-no-form';
 $cfg['Console']['Height']             = 300;
+$cfg['DefaultLang']                   = 'PMA_LANG';
 
 /**
  * Servers configuration
