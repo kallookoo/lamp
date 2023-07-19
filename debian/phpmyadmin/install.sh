@@ -28,8 +28,9 @@ if [[ ! -d /var/www/html/phpmyadmin ]]; then
   mysql < /var/www/html/phpmyadmin/sql/create_tables.sql
   cp -f "${LAMP_DISTRO_PATH}/phpmyadmin/config.inc.php" /var/www/html/phpmyadmin/config.inc.php
   sed -i "s/PMA_PASSWORD/${PMA_PASSWORD}/" /var/www/html/phpmyadmin/config.inc.php
-  sed -i "s/PMA_LANG/${LAMP_PMA_LANG}/" /var/www/html/phpmyadmin/config.inc.php
 else
   console_log "${LAMP_INCLUDE_NAME}" "Updating phpMyAdmin"
   bash "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
 fi
+
+sed -i "s/PMA_LANG/${LAMP_PMA_LANG}/" /var/www/html/phpmyadmin/config.inc.php
