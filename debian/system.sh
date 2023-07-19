@@ -24,7 +24,7 @@ function add_firewall_rule() {
 }
 
 console_log "${LAMP_INCLUDE_NAME}" "Installing basic packages"
-apt_install curl wget pwgen apt-transport-https rsync ca-certificates libnss3-tools ghostscript dirmngr
+apt_install curl wget apt-transport-https rsync ca-certificates libnss3-tools ghostscript dirmngr
 
 include "repositories"
 for package in "${LAMP_DISTRO_PATH}/"*
