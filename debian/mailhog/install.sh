@@ -1,5 +1,3 @@
-#shellcheck disable=SC2154
-
 #
 #
 #
@@ -13,20 +11,17 @@ if ! grep -q "postmaster@${LAMP_FQDN}" /etc/aliases; then
   systemctl restart postfix
 fi
 
-if command_exists mhsendmail && command_exists MailHog; then
-  console_log "${LAMP_INCLUDE_NAME}" "Updating binaries"
-  systemctl stop mailhog
-else
-  console_log "${LAMP_INCLUDE_NAME}" "Installing binaries"
-fi
+[ -f /lib/systemd/system/MailHog.service ] && systemctl stop mailhog
+
+console_log "${LAMP_INCLUDE_NAME}" "Building the latest binaries"
 
 # Build and Install with custom GO enviroment to clean after is installed
 (
   export GOPATH="/tmp/lamp-go"
   export GOCACHE="${GOPATH}/lamp-go/go-cache"
   export GOBIN=/usr/local/bin
-
-  if [[ "$(go version | grep -oP '[0-9]\.[0-9]{2}' | sed 's/\.//')" -lt "117" ]]
+  GOVERSION="$(go version | grep -oP '[0-9]\.[0-9]{2}')"
+  if [[ "${GOVERSION/./}" -lt "117" ]]
   then
     go get github.com/mailhog/MailHog
     go get github.com/mailhog/mhsendmail
@@ -37,7 +32,7 @@ fi
 
   # Delete go files and deprecated mailhog binary
   rm -rf "${GOPATH}" "${GOBIN}/mailhog"
-)
+) >/dev/null 2>&1
 
 cp -f "${LAMP_DISTRO_PATH}/mailhog/mailhog.service" /lib/systemd/system/mailhog.service
 systemctl daemon-reload

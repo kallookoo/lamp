@@ -8,13 +8,8 @@ function package_exists() {
 }
 
 function apt_install() {
-  console_log "${LAMP_INCLUDE_NAME}" "Installing packages"
+  console_log "${LAMP_INCLUDE_NAME}" "Checking and Installing dependencies if not already installed"
   while [[ $# -gt 0 ]]; do package_exists "$1" || apt install -y "$1"; shift; done
-}
-
-function apt_remove() {
-  console_log "${LAMP_INCLUDE_NAME}" "Uninstalling packages"
-  while [[ $# -gt 0 ]]; do package_exists "$1" && apt purge --autoremove -y "$1"; shift; done
 }
 
 function add_firewall_rule() {
@@ -23,7 +18,6 @@ function add_firewall_rule() {
   fi
 }
 
-console_log "${LAMP_INCLUDE_NAME}" "Installing basic packages"
 apt_install curl wget apt-transport-https rsync ca-certificates libnss3-tools ghostscript dirmngr
 
 include "repositories"
@@ -32,5 +26,5 @@ do
   [ -f "$package/repository.sh" ] && include "$(basename "$package")/repository"
 done
 
-console_log "${LAMP_INCLUDE_NAME}" "Upgrading system"
+console_log "${LAMP_INCLUDE_NAME}" "Checking and Full Upgrading the system after including the new repositories"
 ( LANG=; apt update 2>&1 | grep -q "packages can be upgraded" && apt -y full-upgrade )
