@@ -3,6 +3,8 @@
 export CAROOT=/opt/mkcert/share
 MKCERT_DIRECTORY=/opt/mkcert/certificates
 
+mkdir -p "${MKCERT_DIRECTORY}"
+
 # Usage: in_array string ${array[@]}
 function in_array() {
   if [ "$(printf '%s\n' "${@}" | grep -cx -- "${1}")" -gt "1" ]
@@ -94,10 +96,7 @@ then
   /opt/mkcert/bin/current --version
 elif [[ "$ACTION" == "show" ]]
 then
-  if [[ -d "$MKCERT_DIRECTORY" ]]
-  then
-    find "$MKCERT_DIRECTORY" -maxdepth 1 -type f | awk -F"/" '{print "- "$NF}'
-  fi
+  find "$MKCERT_DIRECTORY" -maxdepth 1 -type f | awk -F"/" '{print "- "$NF}'
 elif [[ "$(id -u)" -ne "0" ]]
 then
   echo "Please, run this with the root user or sudo."
@@ -117,13 +116,21 @@ then
       then
         if [[ ! -f "${PEM_FILE}" ]]
         then
-          echo "Creating ${CURRENT_DOMAIN} domain certificate"
+          echo -n "Creating ${CURRENT_DOMAIN} domain certificate"
         else
-          echo "Upgrading ${CURRENT_DOMAIN} domain certificate"
+          echo -n "Upgrading ${CURRENT_DOMAIN} domain certificate"
         fi
         if /opt/mkcert/bin/current -ecdsa -cert-file "${PEM_FILE}" -key-file "${KEY_FILE}" "${CURRENT_DOMAIN}" "*.${CURRENT_DOMAIN}" >/dev/null 2>&1
         then
-          cat "${KEY_FILE}" "${PEM_FILE}" | tee "${PEM_FILE}" >/dev/null 2>&1
+          if cat "${KEY_FILE}" "${PEM_FILE}" | tee "${PEM_FILE}" >/dev/null 2>&1
+          then
+            rm -f "${KEY_FILE}"
+            echo " [DONE]"
+          else
+            echo " [ERROR]"
+          fi
+        else
+          echo " [ERROR]"
         fi
       elif [[ "$ACTION" == "delete" ]]
       then
