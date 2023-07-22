@@ -6,20 +6,26 @@
 # Uncomment the variable and define the value
 #
 
-# Fully Qualified Domain Name (FQDN) for lamp
+# # Fully Qualified Domain Name (FQDN) for lamp
 # LAMP_CONFIG_FQDN=""
-# TLD used instead of extracting it from the OS
-# Note: Not used if the LAMP_CONFIG_FQDN is set.
+# # TLD used instead of extracting it from the OS
+# # Note: Not used if the LAMP_CONFIG_FQDN is set.
 # LAMP_CONFIG_TLD=""
-# Define the IP v4 to use to configure the bind9
-# Note: Only used if the TLD is not localhost
+# # Define the IP v4 to use to configure the bind9
+# # Note: Only used if the TLD is not localhost
 # LAMP_CONFIG_IP_ADDRESS=""
-# Bind9 forwarders
-# Note: By default is disabled it.
-# LAMP_CONFIG_BIND_FORWARDERS="1.1.1.1 1.0.0.1"
-# Default version of PHP
+# # Bind9 forwarders
+# # Note: By default is disabled it.
+# LAMP_CONFIG_BIND_FORWARDERS=()
+# # Default version of PHP
 # LAMP_CONFIG_PHP_VERSION=""
-# Directory to use for all domains ( virtualhosts )
+# # Additional PHP extensions
+# # See the distro-name/php/install.sh file to view the predefined extensions.
+# # Note: If the prefix php- is specified, it will be understood that it is
+# #       the same package for all versions, as is the case with php-pear.
+# #       Otherwise any numerical prefix will be removed.
+# LAMP_CONFIG_PHP_EXTENSIONS=()
+# # Directory to use for all domains ( virtualhosts )
 # LAMP_CONFIG_VIRTUALHOSTS_DIRECTORY=""
 # # Default language for phpMyAdmin
 # LAMP_CONFIG_PMA_LANG=""

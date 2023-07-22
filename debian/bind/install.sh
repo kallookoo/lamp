@@ -10,9 +10,9 @@ else
   sed -i "s/LAMP_TLD/$LAMP_TLD/g" /etc/bind/lamp.conf /etc/bind/lamp.conf.zone
   sed -i "s/LAMP_DNS_SERIAL/$( date +'%s' )/g" /etc/bind/lamp.conf.zone
   sed -i "s/LAMP_IP_ADDRESS/$LAMP_IP_ADDRESS/g" /etc/bind/lamp.conf.zone
-  if [[ -n "$LAMP_CONFIG_BIND_FORWARDERS" ]]; then
+  if [[ ${#LAMP_CONFIG_BIND_FORWARDERS} -gt 0 ]]; then
     LAMP_BIND_FORWARDERS=""
-    for LAMP_BIND_FORWARDER in $LAMP_CONFIG_BIND_FORWARDERS; do
+    for LAMP_BIND_FORWARDER in "${LAMP_CONFIG_BIND_FORWARDERS[@]}"; do
       if echo "$LAMP_BIND_FORWARDER" | grep -qP '^([0-9]{1,3}\.){3}([0-9]{1,3};?)$'; then
         LAMP_BIND_FORWARDERS+="${LAMP_BIND_FORWARDER/;//}; "
       fi
