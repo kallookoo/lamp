@@ -11,7 +11,7 @@ if ! grep -q "postmaster@${LAMP_FQDN}" /etc/aliases; then
   systemctl restart postfix
 fi
 
-[ -f /lib/systemd/system/MailHog.service ] && systemctl stop mailhog
+[ -f /lib/systemd/system/mailhog.service ] && systemctl stop mailhog
 
 console_log "${LAMP_INCLUDE_NAME}" "Building the latest binaries"
 
@@ -32,6 +32,7 @@ console_log "${LAMP_INCLUDE_NAME}" "Building the latest binaries"
 
   # Delete go files and deprecated mailhog binary
   rm -rf "${GOPATH}" "${GOBIN}/mailhog"
+  ln -s "${GOBIN}/MailHog" "${GOBIN}/mailhog"
 ) >/dev/null 2>&1
 
 cp -f "${LAMP_DISTRO_PATH}/mailhog/mailhog.service" /lib/systemd/system/mailhog.service
