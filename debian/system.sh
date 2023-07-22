@@ -26,5 +26,5 @@ do
   [ -f "$package/repository.sh" ] && include "$(basename "$package")/repository"
 done
 
-console_log "${LAMP_INCLUDE_NAME}" "Checking and Full Upgrading the system after including the new repositories"
+console_log "${LAMP_INCLUDE_NAME}" "Checking and Full Upgrading system after including the new repositories"
 ( LANG=; apt update 2>&1 | grep -q "packages can be upgraded" && apt -y full-upgrade )

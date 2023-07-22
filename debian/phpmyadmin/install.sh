@@ -29,7 +29,7 @@ if [[ ! -d /var/www/html/phpmyadmin ]]; then
   cp -f "${LAMP_DISTRO_PATH}/phpmyadmin/config.inc.php" /var/www/html/phpmyadmin/config.inc.php
   sed -i "s/PMA_PASSWORD/${PMA_PASSWORD}/" /var/www/html/phpmyadmin/config.inc.php
 else
-  console_log "${LAMP_INCLUDE_NAME}" "Updating phpMyAdmin"
+  console_log "${LAMP_INCLUDE_NAME}" "Upgrading phpMyAdmin"
   bash "/etc/cron.${LAMP_PMA_CRON_UPGRADE}/phpmyadmin.sh"
 fi
 

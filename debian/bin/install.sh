@@ -6,7 +6,7 @@
 
 mkdir -p /usr/local/bin
 if [ -f /usr/local/bin/lamp ]; then
-  console_log "${LAMP_INCLUDE_NAME}" "Updating lamp binary"
+  console_log "${LAMP_INCLUDE_NAME}" "Upgrading lamp binary"
 else
   console_log "${LAMP_INCLUDE_NAME}" "Installing lamp binary"
 fi
