@@ -233,16 +233,13 @@ function usage() {
 }
 
 function restart_service() {
-  local name
   if ! [[ "$#" -gt "0" ]]; then
     restart_service php mailhog mysql apache2
     return 0
   fi
   while [[ "$#" -gt "0" ]]; do
     if [[ "php" == "$1" ]]; then
-      for name in /lib/systemd/system/php*fpm.service; do
-        systemctl restart "$(basename "$name")"
-      done
+      find /lib/systemd/system/ -name "php*-fpm*" -exec sh -c 'basename "$1" | xargs -r systemctl restart' \;
     else
       systemctl restart "$1"
     fi
