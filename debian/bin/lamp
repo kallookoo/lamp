@@ -40,6 +40,10 @@ function create_subdomain() {
 
   mkcert create "${domain}"
 
+  if [[ -f "/etc/apache2/sites-available/${domain}.conf" ]]; then
+    sed -i 's/ServerAlias.*//' "/etc/apache2/sites-available/${domain}.conf"
+  fi
+
   sed -i 's/ServerAlias.*//' "/etc/apache2/sites-available/${subdomain}.conf"
   sed -i "s/webmaster.*/webmaster@${domain}/" "/etc/apache2/sites-available/${subdomain}.conf"
   sed -i "s@certificates.*@certificates/${domain}.pem@" "/etc/apache2/sites-available/${subdomain}.conf"
@@ -224,6 +228,7 @@ function usage() {
   echo "* The domain cannot contain the TLD, the previously configured TLD is automatically included."
   echo "* Use \"/VIRTUALHOSTS_DIR/domain.LAMP_TLD\" for the DocumentRoot and create the directory if not exists."
   echo "* You can create separate subdomains but because the mkcert does not support it, the certificate will be created for the domain."
+  echo "* When a subdomain is created and the domain exists, the domain alias (ServerAlias) is removed."
   echo "* Use -v as the first argument to enable debugging of the bash script."
 }
 
