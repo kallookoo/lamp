@@ -37,3 +37,7 @@
 # # See available version in https://mariadb.org
 # # Default value is 10.11 ( checked in April 2023 )
 # LAMP_CONFIG_MARIADB_VERSION=""
+# # Enable the Apache h5bp configuration
+# # Posible values: yes, no
+# # Default value is yes
+# LAMP_CONFIG_APACHE_ENABLE_H5BP=""

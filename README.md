@@ -39,6 +39,5 @@ Copy [config-example.sh](config-example.sh) file to config.sh and edit for custo
 
 # TODO
 
-* Add option to enable or disable the [h5bp](https://github.com/h5bp/server-configs-apache) configurations when install Apache.
 * Change the implementation of [h5bp](https://github.com/h5bp/server-configs-apache) configurations for better maintenance.
 * In Apache split the custom configurations inside the apache2.conf for better maintenance.
