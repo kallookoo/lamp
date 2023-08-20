@@ -36,11 +36,11 @@ sed -i "s/DEFAULT_DOMAIN/$LAMP_FQDN/" /etc/apache2/apache2.conf
 
 LAMP_APACHE_ENABLE_MMAP="Off"
 is_true "${LAMP_CONFIG_APACHE_ENABLE_MMAP:-no}" && LAMP_APACHE_ENABLE_MMAP="On"
-sed -i "s/EnableMMAP.*/EnableMMAP ${LAMP_APACHE_ENABLE_MMAP}/" /etc/apache2/apache2.conf
+sed -i "s/^EnableMMAP.*/EnableMMAP ${LAMP_APACHE_ENABLE_MMAP}/" /etc/apache2/apache2.conf
 
 LAMP_APACHE_ENABLE_SENDFILE="Off"
 is_true "${LAMP_CONFIG_APACHE_ENABLE_SENDFILE:-no}" && LAMP_APACHE_ENABLE_SENDFILE="On"
-sed -i "s/EnableSendfile.*/EnableSendfile ${LAMP_APACHE_ENABLE_SENDFILE}/" /etc/apache2/apache2.conf
+sed -i "s/^EnableSendfile.*/EnableSendfile ${LAMP_APACHE_ENABLE_SENDFILE}/" /etc/apache2/apache2.conf
 
 if is_true "${LAMP_CONFIG_APACHE_ENABLE_H5BP:-yes}"
 then
