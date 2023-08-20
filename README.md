@@ -36,8 +36,3 @@ Copy [config-example.sh](config-example.sh) file to config.sh and edit for custo
 * The mkcert if installed in `/opt/mkcert` and the original mkcert binary if `/opt/mkcert/bin/current`.
 * The bind9 only if installed when the TLD if not the localhost.
 * By default when if used the bind9 the file `/etc/dhcp/dhclient.conf` is modified to add the ip in the nameservers.
-
-# TODO
-
-* Change the implementation of [h5bp](https://github.com/h5bp/server-configs-apache) configurations for better maintenance.
-* In Apache split the custom configurations inside the apache2.conf for better maintenance.

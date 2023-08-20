@@ -2,9 +2,12 @@
 
 # Available configurations
 #
-# Empty values use the predefined
-# Uncomment the variable and define the value
-#
+# Empty values use the defaults
+# Uncomment the variable and define the valid value.
+# When the value is of type boolean the possible values would be:
+# - yes, y or 0 for the true value.
+# - no, n or 1 for the false value.
+# Note: Support insensitive case
 
 # # Fully Qualified Domain Name (FQDN) for lamp
 # LAMP_CONFIG_FQDN=""
@@ -38,6 +41,13 @@
 # # Default value is 10.11 ( checked in April 2023 )
 # LAMP_CONFIG_MARIADB_VERSION=""
 # # Enable the Apache h5bp configuration
-# # Posible values: yes, no
-# # Default value is yes
+# # Default value is: yes
 # LAMP_CONFIG_APACHE_ENABLE_H5BP=""
+# # Enable Apache EnableMMAP
+# # See: https://httpd.apache.org/docs/current/mod/core.html#enablemmap
+# # Default value is: no
+# LAMP_CONFIG_APACHE_ENABLE_MMAP=""
+# # Enable Apache EnableSendfile
+# # See: https://httpd.apache.org/docs/current/mod/core.html#enablemmap
+# # Default value is: no
+# LAMP_CONFIG_APACHE_ENABLE_SENDFILE=""

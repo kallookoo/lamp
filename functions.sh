@@ -41,7 +41,6 @@ function include() {
   fi
 }
 
-
 function get_distro() {
   [ -f /etc/os-release ] && awk -F'=' '/^ID/{print $2}' /etc/os-release
 }
@@ -54,7 +53,10 @@ function get_distro_codename() {
   [ -f /etc/os-release ] && awk -F'=' '/VERSION_CODENAME/{print $2}' /etc/os-release
 }
 
-
+function is_true() {
+  echo "${1}" | grep -qiP '^(0|y(es)?)$' && return 0
+  return 1
+}
 
 LAMP_HEADER=""
 function console_log() {

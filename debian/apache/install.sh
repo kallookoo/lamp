@@ -27,17 +27,28 @@ a2enmod -q \
   setenvif \
   ssl
 
+cp -f "${LAMP_DISTRO_PATH}/apache/apache2.conf" /etc/apache2/apache2.conf
 find /var/log/apache2 /etc/apache2/conf-enabled -mindepth 1 -delete
 find /etc/apache2/sites-enabled /etc/apache2/sites-available -mindepth 1 -name "*default*" -delete
-rsync -azh --exclude="*.sh" --exclude="h5bp.conf" "${LAMP_DISTRO_PATH}/apache/" /etc/apache2/
-rm -f /etc/apache2/h5bp.conf
-if [[ "${LAMP_CONFIG_APACHE_ENABLE_H5BP:-yes}" == "yes" ]]
-then
-  cp -f "${LAMP_DISTRO_PATH}/apache/h5bp.conf" /etc/apache2/h5bp.conf
-fi
 sed -i "s@VIRTUALHOSTS_DIR@$LAMP_VIRTUALHOSTS_DIRECTORY@" /etc/apache2/apache2.conf
 sed -i "s/PHP_VERSION/$LAMP_PHP_VERSION/" /etc/apache2/apache2.conf
 sed -i "s/DEFAULT_DOMAIN/$LAMP_FQDN/" /etc/apache2/apache2.conf
+
+LAMP_APACHE_ENABLE_MMAP="Off"
+is_true "${LAMP_CONFIG_APACHE_ENABLE_MMAP:-no}" && LAMP_APACHE_ENABLE_MMAP="On"
+sed -i "s/EnableMMAP.*/EnableMMAP ${LAMP_APACHE_ENABLE_MMAP}/" /etc/apache2/apache2.conf
+
+LAMP_APACHE_ENABLE_SENDFILE="Off"
+is_true "${LAMP_CONFIG_APACHE_ENABLE_SENDFILE:-no}" && LAMP_APACHE_ENABLE_SENDFILE="On"
+sed -i "s/EnableSendfile.*/EnableSendfile ${LAMP_APACHE_ENABLE_SENDFILE}/" /etc/apache2/apache2.conf
+
+if is_true "${LAMP_CONFIG_APACHE_ENABLE_H5BP:-yes}"
+then
+  cp -f "${LAMP_DISTRO_PATH}/apache/h5bp.conf" /etc/apache2/h5bp.conf
+  rsync -azh --delete "${LAMP_DISTRO_PATH}/apache/h5bp/" /etc/apache2/h5bp/
+else
+  rm -rf /etc/apache2/h5bp.conf /etc/apache2/h5bp
+fi
 
 systemctl start apache2
 

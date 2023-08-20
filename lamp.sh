@@ -105,16 +105,16 @@ fi
 console_log lamp "The Public IP for lamp is: $(wget -q -O - https://ipinfo.io/ip)"
 
 LAMP_INCLUDE_NAMES=(
-  "system"
-  "mkcert"
-  "memcached"
-  "php"
-  "apache"
-  "mariadb"
-  "phpmyadmin"
-  "mailhog"
-  "bind"
-  "bin"
+  system
+  mkcert
+  memcached
+  php
+  apache
+  mariadb
+  phpmyadmin
+  mailhog
+  bind
+  bin
 )
 
 for LAMP_INCLUDE_NAME in "${LAMP_INCLUDE_NAMES[@]}"
