@@ -39,20 +39,20 @@ sed -i "s/PHP_VERSION/$LAMP_PHP_VERSION/" /etc/apache2/apache2.conf
 sed -i "s/DEFAULT_DOMAIN/$LAMP_FQDN/" /etc/apache2/apache2.conf
 
 LAMP_APACHE_ENABLE_MMAP="Off"
-if is_true "${LAMP_CONFIG_APACHE_ENABLE_MMAP:-no}"
+if boolval "${LAMP_CONFIG_APACHE_ENABLE_MMAP:-no}"
 then
   LAMP_APACHE_ENABLE_MMAP="On"
 fi
 sed -i "s/^EnableMMAP.*/EnableMMAP ${LAMP_APACHE_ENABLE_MMAP}/" /etc/apache2/apache2.conf
 
 LAMP_APACHE_ENABLE_SENDFILE="Off"
-if is_true "${LAMP_CONFIG_APACHE_ENABLE_SENDFILE:-no}"
+if boolval "${LAMP_CONFIG_APACHE_ENABLE_SENDFILE:-no}"
 then
   LAMP_APACHE_ENABLE_SENDFILE="On"
 fi
 sed -i "s/^EnableSendfile.*/EnableSendfile ${LAMP_APACHE_ENABLE_SENDFILE}/" /etc/apache2/apache2.conf
 
-if is_true "${LAMP_CONFIG_APACHE_ENABLE_H5BP:-yes}"
+if boolval "${LAMP_CONFIG_APACHE_ENABLE_H5BP:-yes}"
 then
   bash "${LAMP_PATH}/extras/h5bp-update.sh" >/dev/null 2>&1
   cp -f "${LAMP_DISTRO_PATH}/apache/h5bp.conf" /etc/apache2/h5bp.conf

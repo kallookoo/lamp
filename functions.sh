@@ -53,8 +53,14 @@ function get_distro_codename() {
   [ -f /etc/os-release ] && awk -F'=' '/VERSION_CODENAME/{print $2}' /etc/os-release
 }
 
-function is_true() {
-  echo "X${1:-}X" | grep -qiP '^X(0|y(es)?|on)X$' && return 0
+function boolval() {
+  if [[ -n $1 ]]
+  then
+    if [[ $1 == true ]] || echo "X${1}X" | grep -qiP '^X(0|y(es)?|on|true)X$'
+    then
+      return 0
+    fi
+  fi
   return 1
 }
 

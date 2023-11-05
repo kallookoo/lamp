@@ -4,10 +4,10 @@
 #
 # Empty values use the defaults
 # Uncomment the variable and define the valid value.
-# When the value is of type boolean the possible values would be:
-# - yes, y, on or 0 for the true value.
-# - no, n, off or 1 for the false value.
-# Note: Support insensitive case
+#
+# When the value is of type boolean
+# the true, 0, "on", "yes" or "y" is treated as true value. (Support insensitive case)
+# anything else is treated as false value.
 
 # Fully Qualified Domain Name (FQDN) for lamp
 # LAMP_CONFIG_FQDN=""

@@ -42,7 +42,7 @@ cp -f "${LAMP_DISTRO_PATH}/phpmyadmin/config.inc.php" /var/www/html/phpmyadmin/c
 sed -i "s/PMA_PASSWORD/${PMA_PASSWORD}/" /var/www/html/phpmyadmin/config.inc.php
 sed -i "s/PMA_LANG/${LAMP_PMA_LANG}/" /var/www/html/phpmyadmin/config.inc.php
 
-if ! is_true "${LAMP_CONFIG_PMA_CONFIGURATIONS:-yes}"
+if ! boolval "${LAMP_CONFIG_PMA_CONFIGURATIONS:-yes}"
 then
   rm -f /var/www/html/phpmyadmin/config.inc.lamp.php
 elif [ -f "${LAMP_PATH}/extras/config.inc.lamp.php" ] && [ ! -f /var/www/html/phpmyadmin/config.inc.lamp.php ]
