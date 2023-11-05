@@ -56,8 +56,8 @@
 # Enable Apache EnableMMAP
 # See: https://httpd.apache.org/docs/current/mod/core.html#enablemmap
 # Default value is: no
-
 # LAMP_CONFIG_APACHE_ENABLE_MMAP=""
+
 # Enable Apache EnableSendfile
 # See: https://httpd.apache.org/docs/current/mod/core.html#enablemmap
 # Default value is: no
