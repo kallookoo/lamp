@@ -54,6 +54,7 @@ sed -i "s/^EnableSendfile.*/EnableSendfile ${LAMP_APACHE_ENABLE_SENDFILE}/" /etc
 
 if is_true "${LAMP_CONFIG_APACHE_ENABLE_H5BP:-yes}"
 then
+  bash "${LAMP_PATH}/extras/h5bp-update.sh" >/dev/null 2>&1
   cp -f "${LAMP_DISTRO_PATH}/apache/h5bp.conf" /etc/apache2/h5bp.conf
   rsync -azh --delete "${LAMP_DISTRO_PATH}/apache/h5bp/" /etc/apache2/h5bp/
 else
