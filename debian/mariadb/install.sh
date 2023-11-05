@@ -13,4 +13,4 @@ systemctl restart mariadb
   echo -n "UPDATE mysql.global_priv SET priv=json_set(priv, '$.plugin', 'mysql_native_password', '$.authentication_string', PASSWORD('root'),"
   echo " '$.auth_or', json_array(json_object(), json_object('plugin', 'unix_socket'))) WHERE User='root';"
   echo " FLUSH PRIVILEGES;"
-) | mysql
+) | mariadb

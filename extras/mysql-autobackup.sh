@@ -34,10 +34,10 @@ MYSQL_EXCLUDE_DATABASES=(
   sys
 )
 
-for database in $(mysql -sNe 'show databases;')
+for database in $(mariadb -sNe 'show databases;')
 do
   if ! in_array "$database" "${MYSQL_EXCLUDE_DATABASES[@]}"
   then
-     mysqldump --databases "$database" | gzip -k9 > "$MYSQL_DIRECTORY/$database.sql.gz"
+     mariadb-dump --databases "$database" | gzip -k9 > "$MYSQL_DIRECTORY/$database.sql.gz"
   fi
 done

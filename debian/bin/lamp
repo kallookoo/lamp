@@ -118,7 +118,7 @@ EOF
     fi
     enable_domain "$domain"
     if [[ "$with_db" == "yes" ]] && [[ -n "${database}" ]]; then
-      mysql -e "CREATE DATABASE IF NOT EXISTS $database;"
+      mariadb -e "CREATE DATABASE IF NOT EXISTS $database;"
     fi
 
     RESTART_APACHE=yes
@@ -159,7 +159,7 @@ function delete_domain() {
 
     RESTART_APACHE=yes
     if [[ "$with_db" == "yes" ]] && [[ -n "${database}" ]]; then
-      mysql -e "DROP DATABASE IF EXISTS $database;"
+      mariadb -e "DROP DATABASE IF EXISTS $database;"
     fi
   fi
   shift
@@ -234,7 +234,7 @@ function usage() {
 
 function restart_service() {
   if ! [[ "$#" -gt "0" ]]; then
-    restart_service php mailhog mysql apache2
+    restart_service php mailhog mariadb apache2
     return 0
   fi
   while [[ "$#" -gt "0" ]]; do

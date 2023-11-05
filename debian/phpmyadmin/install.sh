@@ -24,8 +24,8 @@ if [[ ! -d /var/www/html/phpmyadmin ]]; then
     echo -n "GRANT SELECT, INSERT, UPDATE, DELETE, ALTER ON phpmyadmin.* TO 'pma'@'localhost'"
     echo " IDENTIFIED VIA mysql_native_password USING PASSWORD('${PMA_PASSWORD}');"
     echo "FLUSH PRIVILEGES;"
-  ) | mysql
-  mysql < /var/www/html/phpmyadmin/sql/create_tables.sql
+  ) | mariadb
+  mariadb < /var/www/html/phpmyadmin/sql/create_tables.sql
   cp -f "${LAMP_DISTRO_PATH}/phpmyadmin/config.inc.php" /var/www/html/phpmyadmin/config.inc.php
   sed -i "s/PMA_PASSWORD/${PMA_PASSWORD}/" /var/www/html/phpmyadmin/config.inc.php
 else
