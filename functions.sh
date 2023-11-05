@@ -54,7 +54,7 @@ function get_distro_codename() {
 }
 
 function is_true() {
-  echo "X${1:-}X" | grep -qiP '^X(0|y(es)?)X$' && return 0
+  echo "X${1:-}X" | grep -qiP '^X(0|y(es)?|on)X$' && return 0
   return 1
 }
 
