@@ -2,7 +2,7 @@
 # REPOSITORIES
 #
 
-LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-10.11}"
+LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-11.1}"
 LAMP_MARIADB_REPO_URL="https://archive.mariadb.org/mariadb-${LAMP_MARIADB_VERSION}/repo/${LAMP_DISTRO}"
 find /etc/apt/sources.list.d -type f -name "mariadb*" -delete
 if [ ! -f "/etc/apt/sources.list.d/mariadb-${LAMP_MARIADB_VERSION}.list" ]
