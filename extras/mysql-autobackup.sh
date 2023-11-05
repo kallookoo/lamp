@@ -3,7 +3,7 @@
 if [[ "$(id -u)" -ne "0" ]]
 then
   echo "Please, run this with the root user or sudo."
-  # exit 1
+  exit 1
 fi
 
 MYSQL_DIRECTORY="${1:-}"
