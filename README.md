@@ -21,9 +21,9 @@
 
 ## Configurations
 
-Copy [config-example.sh](config-example.sh) file to config.sh and edit for customize installation.
+Copy [config/templates/lamp.sh](config/templates/lamp.sh) file to `config/lamp.sh` and edit for customize installation.
 
-Optionally copy [extras/config.inc.lamp.phps](extras/config.inc.lamp.phps) to `extras/config.inc.lamp.php` and edit for customize the phpMyAdmin.
+Optionally copy [config/templates/config.inc.lamp.php](config/templates/config.inc.lamp.php) to `config/config.inc.lamp.php` and edit for customize the phpMyAdmin.
 
 ## Commands
 

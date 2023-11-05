@@ -8,7 +8,7 @@ fi
 
 LAMP_PATH="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
 
-[ -f "$LAMP_PATH/config.sh" ] && source "$LAMP_PATH/config.sh"
+[ -f "$LAMP_PATH/config/lamp.sh" ] && source "$LAMP_PATH/config/lamp.sh"
 source "${LAMP_PATH}/functions.sh"
 
 LAMP_DISTRO="$(get_distro)"

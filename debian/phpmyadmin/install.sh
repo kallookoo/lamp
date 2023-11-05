@@ -45,7 +45,7 @@ sed -i "s/PMA_LANG/${LAMP_PMA_LANG}/" /var/www/html/phpmyadmin/config.inc.php
 if ! boolval "${LAMP_CONFIG_PMA_CONFIGURATIONS:-yes}"
 then
   rm -f /var/www/html/phpmyadmin/config.inc.lamp.php
-elif [ -f "${LAMP_PATH}/extras/config.inc.lamp.php" ] && [ ! -f /var/www/html/phpmyadmin/config.inc.lamp.php ]
+elif [ -f "${LAMP_PATH}/config/config.inc.lamp.php" ] && [ ! -f /var/www/html/phpmyadmin/config.inc.lamp.php ]
 then
-    cp -f "${LAMP_PATH}/extras/config.inc.lamp.php" /var/www/html/phpmyadmin/config.inc.lamp.php
+    cp -f "${LAMP_PATH}/config/config.inc.lamp.php" /var/www/html/phpmyadmin/config.inc.lamp.php
 fi
