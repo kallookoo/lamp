@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#
+# Auto Update the phpMyAdmin
+#
+
 if wget -q https://raw.githubusercontent.com/phpmyadmin/phpmyadmin/STABLE/ChangeLog -O /tmp/phpMyAdmin-changelog
 then
   PHPMYADMIN_VERSION="$(grep -m1 -oE '[0-9\.]+ \([0-9]{4}' /tmp/phpMyAdmin-changelog | awk '{print $1}')"

@@ -1,5 +1,5 @@
 #
-#
+# Bind9 Installer
 #
 
 if [[ "$LAMP_TLD" == "localhost" ]]; then

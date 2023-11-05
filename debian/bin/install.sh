@@ -1,7 +1,5 @@
-#shellcheck disable=SC2154
-
 #
-#
+# Lamp command Installer
 #
 
 mkdir -p /usr/local/bin

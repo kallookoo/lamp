@@ -1,5 +1,5 @@
 #
-#
+# MailHog Installer
 #
 
 echo "postfix postfix/main_mailer_type select Internet Site" | sudo debconf-set-selections

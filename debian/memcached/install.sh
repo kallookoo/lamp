@@ -1,5 +1,5 @@
 #
-#
+# Memcached Installer
 #
 
 apt_install memcached

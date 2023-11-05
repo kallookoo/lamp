@@ -1,4 +1,8 @@
 <?php // phpcs:disable
+/**
+ * Print the php info with additionals menu for all PHP installed versions.
+ */
+
 $menu = '<ul style="list-style: none; margin: 16px 0; padding: 0; text-align: center; display: flex; justify-content: center;">';
 foreach ( glob( '/etc/php/*' ) as $version ) {
 	$version = substr( $version, 9 );
@@ -21,11 +25,8 @@ $meta = '
 ob_start();
 phpinfo();
 echo preg_replace(
-	[ '/<body>/', '/<\/head>/' ],
-	[
-		sprintf( '<body>%s', $menu ),
-		sprintf( '%s</head>', $meta ),
-	],
+	array( '/<\/head>/', '/<body>/' ),
+	array( "{$meta}</head>", "<body>{$menu}" ),
 	ob_get_clean(),
 	1
 );

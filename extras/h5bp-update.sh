@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#
+# Update the h5bp files from the git repository if exists
+#
+
 LAMP_PATH="$(cd -P -- "$(dirname -- "$(dirname -- "$0")")" && pwd -P)"
 H5BP_SRC="$(sed -r 's@/lamp@@' <<< "$LAMP_PATH")/server-configs-apache/h5bp"
 if [ -d "$H5BP_SRC" ]

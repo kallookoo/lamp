@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#
+# Script for mkcert to help its use.
+#
+
 if [[ -n "${1}" ]] && [[ "${1}" =~ ^(create|delete|list|upgrade|version)$ ]]
 then
   CURRENT_OPTION="${1}"

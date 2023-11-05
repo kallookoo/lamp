@@ -1,5 +1,5 @@
 #
-#
+# MariaDB Installer
 #
 
 apt_install mariadb-server

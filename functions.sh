@@ -1,5 +1,5 @@
 #
-#
+# Global Functions
 #
 
 # Usage: in_array string ${array[@]}

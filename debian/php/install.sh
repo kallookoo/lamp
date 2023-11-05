@@ -1,5 +1,5 @@
 #
-#
+# PHP Installer
 #
 
 LAMP_PHP_VERSION="${LAMP_CONFIG_PHP_VERSION:-}"

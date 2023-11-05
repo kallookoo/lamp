@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#
+# Script to help in the manipulation of Virtual Hosts
+#
+
 # Enable script debug
 if [[ "${1:-no}" == "-v" ]]; then
   shift

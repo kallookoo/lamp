@@ -1,13 +1,14 @@
 <?php // phpcs:disable WordPress
 /**
+ * Custom configurations for phpMyAdmin.
+ *
  * All directives are explained at <https://docs.phpmyadmin.net/>.
  *
- * @package phpMyAdmin
+ * @package lamp\phpmyadmin
  */
 
-/**
- * Global configurations
- */
+/** Global configurations. */
+
 $cfg['ThemeManager']                  = false;
 $cfg['MaxRows']                       = 50;
 $cfg['SendErrorReports']              = 'never';
@@ -21,9 +22,6 @@ $cfg['QueryHistoryDB']                = true;
 $cfg['Export']['method']              = 'custom-no-form';
 $cfg['Console']['Height']             = 300;
 
-/**
- * Servers configuration
- */
+/** Servers configuration. */
 
-/* Server parameters */
 $cfg['Servers'][ $i ]['hide_db'] = '^((information|performance)_schema|mysql|phpmyadmin|sys)$';

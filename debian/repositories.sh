@@ -1,5 +1,5 @@
 #
-# REPOSITORIES
+# Enabled the non-free and contrib repositories
 #
 
 if ! grep 'non-free' /etc/apt/sources.list | grep -qv 'cdrom'

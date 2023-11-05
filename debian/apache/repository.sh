@@ -1,5 +1,5 @@
 #
-# REPOSITORIES
+# Declare the Apache Repository
 #
 
 if [ ! -f /etc/apt/sources.list.d/apache2.list ]

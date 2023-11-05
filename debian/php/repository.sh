@@ -1,5 +1,5 @@
 #
-# REPOSITORIES
+# Declare the PHP Repository
 #
 
 if [ ! -f /etc/apt/sources.list.d/php.list ]

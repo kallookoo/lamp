@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#
+# Create the compressed backups for created databases
+#
+
 if [[ "$(id -u)" -ne "0" ]]
 then
   echo "Please, run this with the root user or sudo."

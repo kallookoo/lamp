@@ -1,5 +1,5 @@
 #
-#
+# Global Functions for debian base systems and install requeriments.
 #
 
 function package_exists() {

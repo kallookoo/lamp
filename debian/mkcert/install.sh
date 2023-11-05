@@ -1,5 +1,5 @@
 #
-#
+# mkcert Installer
 #
 
 cp -f "$LAMP_PATH/$LAMP_DISTRO/mkcert/mkcert" /usr/local/bin/mkcert

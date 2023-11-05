@@ -1,5 +1,5 @@
 #
-#
+# phpMyAdmin Installer
 #
 
 LAMP_PMA_LANG="${LAMP_CONFIG_PMA_LANG:-}"

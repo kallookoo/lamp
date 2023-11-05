@@ -1,5 +1,5 @@
 #
-# REPOSITORIES
+# Declare the MariaDB Repository
 #
 
 LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-11.1}"

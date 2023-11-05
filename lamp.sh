@@ -9,7 +9,6 @@ fi
 LAMP_PATH="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
 
 [ -f "$LAMP_PATH/config.sh" ] && source "$LAMP_PATH/config.sh"
-# shellcheck disable=SC1094
 source "${LAMP_PATH}/functions.sh"
 
 LAMP_DISTRO="$(get_distro)"
