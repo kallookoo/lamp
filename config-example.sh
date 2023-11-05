@@ -40,7 +40,7 @@
 # LAMP_CONFIG_PMA_LANG=""
 
 # phpMyAdmin Cron type to execute the auto update.
-# Possible values: hourly, daily, weekly, monthly
+# Possible values: hourly, daily, weekly, monthly, disabled
 # Default value is monthly
 # LAMP_CONFIG_PMA_CRON_UPGRADE=""
 
