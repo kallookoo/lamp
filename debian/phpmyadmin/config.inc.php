@@ -8,20 +8,8 @@
 /**
  * Global phpMyAdmin configurations
  */
-$cfg['TempDir']                       = '/tmp/';
-$cfg['ThemeManager']                  = false;
-$cfg['MaxRows']                       = 50;
-$cfg['SendErrorReports']              = 'never';
-$cfg['TitleDefault']                  = '@HTTP_HOST@';
-$cfg['TitleServer']                   = $cfg['TitleDefault'];
-$cfg['TitleDatabase']                 = '@HTTP_HOST@ : @DATABASE@';
-$cfg['TitleTable']                    = '@HTTP_HOST@ : @DATABASE@ : @TABLE@';
-$cfg['ShowDatabasesNavigationAsTree'] = false;
-$cfg['VersionCheck']                  = false;
-$cfg['QueryHistoryDB']                = true;
-$cfg['Export']['method']              = 'custom-no-form';
-$cfg['Console']['Height']             = 300;
-$cfg['DefaultLang']                   = 'PMA_LANG';
+$cfg['TempDir']     = '/tmp/';
+$cfg['DefaultLang'] = 'PMA_LANG';
 
 /**
  * Servers configuration
@@ -34,9 +22,6 @@ $i = 1;
 $cfg['Servers'][ $i ]['auth_type'] = 'config';
 $cfg['Servers'][ $i ]['user']      = 'root';
 $cfg['Servers'][ $i ]['password']  = 'root';
-/* Server parameters */
-$cfg['Servers'][ $i ]['host']    = 'localhost';
-$cfg['Servers'][ $i ]['hide_db'] = '^((information|performance)_schema|mysql|phpmyadmin|sys)$';
 
 /**
  * Configuration storage settings.
@@ -67,3 +52,10 @@ $cfg['Servers'][ $i ]['savedsearches']     = 'pma__savedsearches';
 $cfg['Servers'][ $i ]['central_columns']   = 'pma__central_columns';
 $cfg['Servers'][ $i ]['designer_settings'] = 'pma__designer_settings';
 $cfg['Servers'][ $i ]['export_templates']  = 'pma__export_templates';
+
+/**
+ * Custom configurations.
+ */
+if ( is_readable( __DIR__ . '/config.inc.lamp.php' ) ) {
+	include __DIR__ . '/config.inc.lamp.php';
+}

@@ -36,8 +36,15 @@
 
 # Directory to use for all domains ( virtualhosts )
 # LAMP_CONFIG_VIRTUALHOSTS_DIRECTORY=""
+
 # Default language for phpMyAdmin
 # LAMP_CONFIG_PMA_LANG=""
+
+# Add the phpmyadmin custom configurations
+# See the extras/config.inc.lamp.php file.
+# Default value is yes
+# Note: This file will only be created if it does not exist.
+# LAMP_CONFIG_PMA_CONFIGURATIONS=""
 
 # phpMyAdmin Cron type to execute the auto update.
 # Possible values: hourly, daily, weekly, monthly, disabled

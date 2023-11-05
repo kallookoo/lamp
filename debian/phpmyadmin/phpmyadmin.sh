@@ -9,7 +9,7 @@ then
     if wget -q "https://files.phpmyadmin.net/phpMyAdmin/${PHPMYADMIN_VERSION}/${PHPMYADMIN_TAR_NAME}.tar.xz" -O "/tmp/${PHPMYADMIN_TAR_NAME}.tar.xz"
     then
       tar -xf "/tmp/${PHPMYADMIN_TAR_NAME}.tar.xz" --directory /tmp/ && \
-        rsync -aqz --delete --exclude 'config.inc.php' "/tmp/${PHPMYADMIN_TAR_NAME}/" /var/www/html/phpmyadmin/
+        rsync -aqz --delete --exclude 'config.inc.php' --exclude 'config.inc.lamp.php' "/tmp/${PHPMYADMIN_TAR_NAME}/" /var/www/html/phpmyadmin/
     fi
   fi
 fi
