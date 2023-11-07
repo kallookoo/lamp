@@ -2,12 +2,11 @@
 # Lamp command Installer
 #
 
-mkdir -p /usr/local/bin
-if [ -f /usr/local/bin/lamp ]
-then
+if [ -f /usr/local/bin/lamp ]; then
   console_log "$LAMP_INCLUDE_NAME" "Upgrading lamp binary"
 else
   console_log "$LAMP_INCLUDE_NAME" "Installing lamp binary"
+  mkdir -p /usr/local/bin
 fi
 
 cp -f "$LAMP_DISTRO_PATH/bin/lamp" /usr/local/bin/lamp

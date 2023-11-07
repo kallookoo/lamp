@@ -21,9 +21,14 @@
 
 ## Configurations
 
-Copy [config/templates/lamp.sh](config/templates/lamp.sh) file to `config/lamp.sh` and edit for customize installation.
+Copy [config/templates/lamp.bash](config/templates/lamp.bash) file to `config/lamp.bash` and edit for customize installation.
 
 Optionally copy [config/templates/config.inc.lamp.php](config/templates/config.inc.lamp.php) to `config/config.inc.lamp.php` and edit for customize the phpMyAdmin.
+
+## Installation
+
+Run the `[install](install)` with root user or sudo. Example: `sudo ./install`
+
 
 ## Commands
 

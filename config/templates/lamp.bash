@@ -28,7 +28,7 @@
 # LAMP_CONFIG_PHP_VERSION=""
 
 # Additional PHP extensions
-# See the distro-name/php/install.sh file to view the predefined extensions.
+# See the distro-name/php/install.bash file to view the predefined extensions.
 # Note: If the prefix php- is specified, it will be understood that it is
 #       the same package for all versions, as is the case with php-pear.
 #       Otherwise any numerical prefix will be removed.

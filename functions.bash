@@ -2,10 +2,8 @@
 # Global Functions
 #
 
-# Usage: in_array string ${array[@]}
 function in_array() {
-  if [ $# -gt 2 ] && [ "$(printf '%s\n' "${@}" | grep -cx -- "$1")" -gt "1" ]
-  then
+  if [[ $# -gt 2 ]] && [[ "$(printf '%s\n' "${@}" | grep -cx -- "$1")" -gt "1" ]]; then
     return 0
   fi
   return 1
@@ -21,23 +19,23 @@ function github_download_url() {
 
 function include() {
   local name="$1"
+  local distro="$LAMP_DISTRO"
 
-  if [ -f "$LAMP_DISTRO_PATH/$name.sh" ]
-  then
-    source "$LAMP_DISTRO_PATH/$name.sh"
-  elif [ -f "$LAMP_DISTRO_PATH/$name/install.sh" ]
-  then
-    source "$LAMP_DISTRO_PATH/$name/install.sh"
-  elif [ "repositories" != "$name" ]
-  then
-    if [ "$LAMP_DISTRO" == "ubuntu" ]
-    then
+  if [ -f "$LAMP_DISTRO_PATH/$name.bash" ]; then
+    source "$LAMP_DISTRO_PATH/$name.bash"
+  elif [ -f "$LAMP_DISTRO_PATH/$name/install.bash" ]; then
+    source "$LAMP_DISTRO_PATH/$name/install.bash"
+  elif [ "repositories" != "$name" ]; then
+    case "$LAMP_DISTRO" in
+    ubuntu)
       LAMP_DISTRO="debian"
       LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
+      ;;
+    esac
 
+    if [[ "$distro" != "$LAMP_DISTRO" ]]; then
       include "$name"
-
-      LAMP_DISTRO="ubuntu"
+      LAMP_DISTRO="$distro"
       LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
     fi
   fi
@@ -61,14 +59,12 @@ function boolval() {
 
 LAMP_HEADER=""
 function console_log() {
-  if [[ $# -gt 1 ]]
-  then
+  if [[ $# -gt 1 ]]; then
     local header="$1"
     shift
-    header="[ $( echo "$header" | tr '[:lower:]' '[:upper:]' ) ]"
+    header="[ $(echo "$header" | tr '[:lower:]' '[:upper:]') ]"
 
-    if [ "$LAMP_HEADER" == "$header" ]
-    then
+    if [ "$LAMP_HEADER" == "$header" ]; then
       printf "* %s\n" "${@}"
     else
       LAMP_HEADER="$header"

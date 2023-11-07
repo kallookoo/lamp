@@ -3,22 +3,17 @@
 #
 # Script for mkcert to help its use.
 #
-if [[ -z "$1" ]]
-then
+if [[ -z "$1" ]]; then
   CURRENT_OPTION="help"
-elif [[ "$1" =~ ^(create|delete|list|upgrade|version)$ ]]
-then
+elif [[ "$1" =~ ^(create|delete|list|upgrade|version)$ ]]; then
   CURRENT_OPTION="$1"
   shift
-  if [[ "$CURRENT_OPTION" =~ ^(create|delete|upgrade)$ ]]
-  then
-    if [[ "$(id -u)" -ne "0" ]]
-    then
+  if [[ "$CURRENT_OPTION" =~ ^(create|delete|upgrade)$ ]]; then
+    if [[ "$(id -u)" -ne "0" ]]; then
       echo "Please, run this with the root user or sudo."
       exit 1
-    elif [[ "$CURRENT_OPTION" != "upgrade" && $# -eq 0 ]]
-    then
-       echo "Missing domains for \"$CURRENT_OPTION\" option"
+    elif [[ "$CURRENT_OPTION" != "upgrade" && $# -eq 0 ]]; then
+      echo "Missing domains for \"$CURRENT_OPTION\" option"
       exit 1
     fi
   fi
@@ -29,95 +24,87 @@ export CAROOT=/opt/mkcert/share
 mkdir -p /opt/mkcert/certificates
 
 case "${CURRENT_OPTION:-help}" in
-  create|delete)
-    while [[ "$#" -gt "0" ]]
-    do
-      CURRENT_DOMAIN="$1"
-      CURRENT_MESSAGE="Invalid format for \"$CURRENT_DOMAIN\" domain"
-      shift
-      if echo "$CURRENT_DOMAIN" | grep -qP "^[\w\-]+\.[\w]+$"
-      then
-        PEM_FILE="/opt/mkcert/certificates/$CURRENT_DOMAIN.pem"
-        KEY_FILE="/opt/mkcert/certificates/$CURRENT_DOMAIN.key"
-        case "$CURRENT_OPTION" in
-          create)
-            if [[ -f "${PEM_FILE}" ]]
-            then
-              CURRENT_ACTION="Upgrading"
-            fi
-            CURRENT_MESSAGE="${CURRENT_ACTION:-Creating} \"$CURRENT_DOMAIN\" domain certificate"
-            /opt/mkcert/bin/current \
-              -ecdsa \
-              -cert-file "$PEM_FILE" \
-              -key-file "$KEY_FILE" \
-              "$CURRENT_DOMAIN" "*.$CURRENT_DOMAIN" >/dev/null 2>&1 && \
-                cat "$KEY_FILE" "$PEM_FILE" | tee "$PEM_FILE" >/dev/null 2>&1 && {
-                  CURRENT_ACTION_STATUS="DONE"
-                  rm -f "$KEY_FILE"
-                }
-            CURRENT_MESSAGE+=" [${CURRENT_ACTION_STATUS:-ERROR}]"
-            ;;
-          delete)
-            if [[ -f "$PEM_FILE" || -f "$KEY_FILE" ]]
-            then
-              CURRENT_ACTION="Deleting"
-              find /opt/mkcert/certificates -name "*$CURRENT_DOMAIN*" -delete
-            fi
-            CURRENT_MESSAGE="${CURRENT_ACTION:-Missing} \"$CURRENT_DOMAIN\" domain certificate"
-            ;;
-        esac
-      fi
-      echo "$CURRENT_MESSAGE"
-    done
-    ;;
-  upgrade)
-    CURRENT_ACTION="Upgrading"
-    if [[ ! -f /opt/mkcert/bin/current ]]
-    then
-      CURRENT_ACTION="Installing"
-      mkdir -p /opt/mkcert/bin
-    fi
-    echo "$CURRENT_ACTION the mkcert binary"
-    if wget -q "https://dl.filippo.io/mkcert/latest?for=linux/$(uname -r | awk -F'-' '{print $(NF)}')" -O /opt/mkcert/bin/latest
-    then
-      chmod +x /opt/mkcert/bin/latest
-      # Recheck for security
-      if /opt/mkcert/bin/latest --help 2>&1 | grep -q 'CAROOT'
-      then
-        mv /opt/mkcert/bin/latest /opt/mkcert/bin/current
-        if ! [[ -f "$CAROOT/rootCA-key.pem" || -f "$CAROOT/rootCA.pem" ]]
-        then
-          rm -rf "$CAROOT"
-          find /etc/ssl/certs/ -name "*mkcert*" -delete
-          /opt/mkcert/bin/current -install >/dev/null 2>&1
-          wget -q https://curl.se/ca/cacert.pem -O /etc/ssl/cacert.pem
-          find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >> /etc/ssl/cacert.pem
+create | delete)
+  while [[ "$#" -gt "0" ]]; do
+    CURRENT_DOMAIN="$1"
+    CURRENT_MESSAGE="Invalid format for \"$CURRENT_DOMAIN\" domain"
+    shift
+    if echo "$CURRENT_DOMAIN" | grep -qP "^[\w\-]+\.[\w]+$"; then
+      PEM_FILE="/opt/mkcert/certificates/$CURRENT_DOMAIN.pem"
+      KEY_FILE="/opt/mkcert/certificates/$CURRENT_DOMAIN.key"
+      case "$CURRENT_OPTION" in
+      create)
+        if [[ -f "${PEM_FILE}" ]]; then
+          CURRENT_ACTION="Upgrading"
         fi
-        exit
-      fi
+        CURRENT_MESSAGE="${CURRENT_ACTION:-Creating} \"$CURRENT_DOMAIN\" domain certificate"
+        /opt/mkcert/bin/current \
+          -ecdsa \
+          -cert-file "$PEM_FILE" \
+          -key-file "$KEY_FILE" \
+          "$CURRENT_DOMAIN" "*.$CURRENT_DOMAIN" >/dev/null 2>&1 &&
+          cat "$KEY_FILE" "$PEM_FILE" | tee "$PEM_FILE" >/dev/null 2>&1 && {
+          CURRENT_ACTION_STATUS="DONE"
+          rm -f "$KEY_FILE"
+        }
+        CURRENT_MESSAGE+=" [${CURRENT_ACTION_STATUS:-ERROR}]"
+        ;;
+      delete)
+        if [[ -f "$PEM_FILE" || -f "$KEY_FILE" ]]; then
+          CURRENT_ACTION="Deleting"
+          find /opt/mkcert/certificates -name "*$CURRENT_DOMAIN*" -delete
+        fi
+        CURRENT_MESSAGE="${CURRENT_ACTION:-Missing} \"$CURRENT_DOMAIN\" domain certificate"
+        ;;
+      esac
     fi
-    echo "Some problem occurred while $CURRENT_ACTION the mkcert binary."
-    ;;
-  list)
-    find /opt/mkcert/certificates -type f | awk -F"/" '{print "- "$NF}'
-    ;;
-  version)
-    /opt/mkcert/bin/current --version
-    ;;
-  *)
-    echo "Usage: sudo mkcert [option] domain.tld..."
-    echo
-    echo "* This command join key and pem files generated by mkcert on single file"
-    echo "  to use in SSLCertificateFile ( Apache Directive )"
-    echo "* The certificates are always willcards and"
-    echo "  saved to \"/opt/mkcert/certificates\""
-    echo
-    echo "OPTIONS:"
-    echo " create  - Create or update if exists the certificates for domain.tld"
-    echo " delete  - Delete the certificates for domain.tld"
-    echo " help    - Print this text and exit"
-    echo " list    - List all created certificates"
-    echo " upgrade - Upgrade the mkcert binary to latest version"
-    echo " version - Print the mkcert binary version"
-    ;;
+    echo "$CURRENT_MESSAGE"
+  done
+  ;;
+upgrade)
+  CURRENT_ACTION="Upgrading"
+  if [[ ! -f /opt/mkcert/bin/current ]]; then
+    CURRENT_ACTION="Installing"
+    mkdir -p /opt/mkcert/bin
+  fi
+  echo "$CURRENT_ACTION the mkcert binary"
+  if wget -q "https://dl.filippo.io/mkcert/latest?for=linux/$(uname -r | awk -F'-' '{print $(NF)}')" -O /opt/mkcert/bin/latest; then
+    chmod +x /opt/mkcert/bin/latest
+    # Recheck for security
+    if /opt/mkcert/bin/latest --help 2>&1 | grep -q 'CAROOT'; then
+      mv /opt/mkcert/bin/latest /opt/mkcert/bin/current
+      if ! [[ -f "$CAROOT/rootCA-key.pem" || -f "$CAROOT/rootCA.pem" ]]; then
+        rm -rf "$CAROOT"
+        find /etc/ssl/certs/ -name "*mkcert*" -delete
+        /opt/mkcert/bin/current -install >/dev/null 2>&1
+        wget -q https://curl.se/ca/cacert.pem -O /etc/ssl/cacert.pem
+        find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >>/etc/ssl/cacert.pem
+      fi
+      exit
+    fi
+  fi
+  echo "Some problem occurred while $CURRENT_ACTION the mkcert binary."
+  ;;
+list)
+  find /opt/mkcert/certificates -type f | awk -F"/" '{print "- "$NF}'
+  ;;
+version)
+  /opt/mkcert/bin/current --version
+  ;;
+*)
+  echo "Usage: sudo mkcert [option] domain.tld..."
+  echo
+  echo "* This command join key and pem files generated by mkcert on single file"
+  echo "  to use in SSLCertificateFile ( Apache Directive )"
+  echo "* The certificates are always willcards and"
+  echo "  saved to \"/opt/mkcert/certificates\""
+  echo
+  echo "OPTIONS:"
+  echo " create  - Create or update if exists the certificates for domain.tld"
+  echo " delete  - Delete the certificates for domain.tld"
+  echo " help    - Print this text and exit"
+  echo " list    - List all created certificates"
+  echo " upgrade - Upgrade the mkcert binary to latest version"
+  echo " version - Print the mkcert binary version"
+  ;;
 esac
