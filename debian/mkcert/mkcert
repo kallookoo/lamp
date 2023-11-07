@@ -3,19 +3,24 @@
 #
 # Script for mkcert to help its use.
 #
-
-if [[ -n "${1}" ]] && [[ "${1}" =~ ^(create|delete|list|upgrade|version)$ ]]
+if [[ -z "$1" ]]
 then
-  CURRENT_OPTION="${1}"
+  CURRENT_OPTION="help"
+elif [[ "$1" =~ ^(create|delete|list|upgrade|version)$ ]]
+then
+  CURRENT_OPTION="$1"
   shift
-  if [[ "${CURRENT_OPTION}" =~ ^(create|delete|upgrade)$ ]] && [[ "$(id -u)" -ne "0" ]]
+  if [[ "$CURRENT_OPTION" =~ ^(create|delete|upgrade)$ ]]
   then
-    echo "Please, run this with the root user or sudo."
-    exit
-  elif [[ "${CURRENT_OPTION}" =~ ^(create|delete)$ ]] && [[ "$#" -eq "0" ]]
-  then
-     echo "Missing domains for \"${CURRENT_OPTION}\" option"
-     exit
+    if [[ "$(id -u)" -ne "0" ]]
+    then
+      echo "Please, run this with the root user or sudo."
+      exit 1
+    elif [[ "$CURRENT_OPTION" != "upgrade" && $# -eq 0 ]]
+    then
+       echo "Missing domains for \"$CURRENT_OPTION\" option"
+      exit 1
+    fi
   fi
 fi
 
@@ -27,35 +32,42 @@ case "${CURRENT_OPTION:-help}" in
   create|delete)
     while [[ "$#" -gt "0" ]]
     do
-      CURRENT_DOMAIN="${1}"
+      CURRENT_DOMAIN="$1"
+      CURRENT_MESSAGE="Invalid format for \"$CURRENT_DOMAIN\" domain"
       shift
-      if echo "${CURRENT_DOMAIN}" | grep -qP "^[\w\-]+\.[\w]+$"
+      if echo "$CURRENT_DOMAIN" | grep -qP "^[\w\-]+\.[\w]+$"
       then
-        PEM_FILE="/opt/mkcert/certificates/${CURRENT_DOMAIN}.pem"
-        KEY_FILE="/opt/mkcert/certificates/${CURRENT_DOMAIN}.key"
-        if [[ "${CURRENT_OPTION}" = "create" ]]
-        then
-          [ -f "${PEM_FILE}" ] && CURRENT_ACTION="Upgrading"
-          echo -n "${CURRENT_ACTION:-Creating} \"${CURRENT_DOMAIN}\" domain certificate"
-          /opt/mkcert/bin/current -ecdsa -cert-file "${PEM_FILE}" -key-file "${KEY_FILE}" \
-            "${CURRENT_DOMAIN}" "*.${CURRENT_DOMAIN}" >/dev/null 2>&1 && \
-            cat "${KEY_FILE}" "${PEM_FILE}" | tee "${PEM_FILE}" >/dev/null 2>&1 && {
-              CURRENT_ACTION_STATUS="DONE"
-              rm -f "${KEY_FILE}"
-            }
-          echo " [${CURRENT_ACTION_STATUS:-ERROR}]"
-        elif [[ "${CURRENT_OPTION}" = "delete" ]]
-        then
-            if [[ -f "${PEM_FILE}" ]] || [[ -f "${KEY_FILE}" ]]
+        PEM_FILE="/opt/mkcert/certificates/$CURRENT_DOMAIN.pem"
+        KEY_FILE="/opt/mkcert/certificates/$CURRENT_DOMAIN.key"
+        case "$CURRENT_OPTION" in
+          create)
+            if [[ -f "${PEM_FILE}" ]]
+            then
+              CURRENT_ACTION="Upgrading"
+            fi
+            CURRENT_MESSAGE="${CURRENT_ACTION:-Creating} \"$CURRENT_DOMAIN\" domain certificate"
+            /opt/mkcert/bin/current \
+              -ecdsa \
+              -cert-file "$PEM_FILE" \
+              -key-file "$KEY_FILE" \
+              "$CURRENT_DOMAIN" "*.$CURRENT_DOMAIN" >/dev/null 2>&1 && \
+                cat "$KEY_FILE" "$PEM_FILE" | tee "$PEM_FILE" >/dev/null 2>&1 && {
+                  CURRENT_ACTION_STATUS="DONE"
+                  rm -f "$KEY_FILE"
+                }
+            CURRENT_MESSAGE+=" [${CURRENT_ACTION_STATUS:-ERROR}]"
+            ;;
+          delete)
+            if [[ -f "$PEM_FILE" || -f "$KEY_FILE" ]]
             then
               CURRENT_ACTION="Deleting"
-              find /opt/mkcert/certificates -name "*${CURRENT_DOMAIN}*" -delete
+              find /opt/mkcert/certificates -name "*$CURRENT_DOMAIN*" -delete
             fi
-            echo "${CURRENT_ACTION:-Missing} \"${CURRENT_DOMAIN}\" domain certificate"
-        fi
-      else
-        echo "Invalid format for \"${CURRENT_DOMAIN}\" domain"
+            CURRENT_MESSAGE="${CURRENT_ACTION:-Missing} \"$CURRENT_DOMAIN\" domain certificate"
+            ;;
+        esac
       fi
+      echo "$CURRENT_MESSAGE"
     done
     ;;
   upgrade)
@@ -65,7 +77,7 @@ case "${CURRENT_OPTION:-help}" in
       CURRENT_ACTION="Installing"
       mkdir -p /opt/mkcert/bin
     fi
-    echo "${CURRENT_ACTION} the mkcert binary"
+    echo "$CURRENT_ACTION the mkcert binary"
     if wget -q "https://dl.filippo.io/mkcert/latest?for=linux/$(uname -r | awk -F'-' '{print $(NF)}')" -O /opt/mkcert/bin/latest
     then
       chmod +x /opt/mkcert/bin/latest
@@ -73,9 +85,9 @@ case "${CURRENT_OPTION:-help}" in
       if /opt/mkcert/bin/latest --help 2>&1 | grep -q 'CAROOT'
       then
         mv /opt/mkcert/bin/latest /opt/mkcert/bin/current
-        if [[ ! -f "${CAROOT}/rootCA-key.pem" ]] || [[ ! -f "${CAROOT}/rootCA.pem" ]]
+        if ! [[ -f "$CAROOT/rootCA-key.pem" || -f "$CAROOT/rootCA.pem" ]]
         then
-          rm -rf "${CAROOT}"
+          rm -rf "$CAROOT"
           find /etc/ssl/certs/ -name "*mkcert*" -delete
           /opt/mkcert/bin/current -install >/dev/null 2>&1
           wget -q https://curl.se/ca/cacert.pem -O /etc/ssl/cacert.pem
@@ -84,7 +96,7 @@ case "${CURRENT_OPTION:-help}" in
         exit
       fi
     fi
-    echo "Some problem occurred while ${CURRENT_ACTION} the mkcert binary."
+    echo "Some problem occurred while $CURRENT_ACTION the mkcert binary."
     ;;
   list)
     find /opt/mkcert/certificates -type f | awk -F"/" '{print "- "$NF}'

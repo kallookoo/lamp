@@ -3,7 +3,7 @@
 #
 
 apt_install mariadb-server
-cp -f "${LAMP_DISTRO_PATH}/mariadb/90-custom.cnf" /etc/mysql/mariadb.conf.d/90-custom.cnf
+cp -f "$LAMP_DISTRO_PATH/mariadb/90-custom.cnf" /etc/mysql/mariadb.conf.d/90-custom.cnf
 systemctl restart mariadb
 (
   echo "DROP DATABASE IF EXISTS test;"

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-if [[ $(id -u) -ne 0 ]]
+#
+# Lamp Installer
+#
+
+if [[ "$(id -u)" -ne "0" ]]
 then
   echo "This script must be run as root, please run this script again with the root user or sudo."
   exit 1
@@ -8,25 +12,28 @@ fi
 
 LAMP_PATH="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
 
-[ -f "$LAMP_PATH/config/lamp.sh" ] && source "$LAMP_PATH/config/lamp.sh"
-source "${LAMP_PATH}/functions.sh"
+if [[ -f "$LAMP_PATH/config/lamp.sh" ]]
+then
+  source "$LAMP_PATH/config/lamp.sh"
+fi
+source "$LAMP_PATH/functions.sh"
 
 LAMP_DISTRO="$(get_distro)"
-if [ -z "$LAMP_DISTRO" ] || [ ! -d "$LAMP_PATH/$LAMP_DISTRO" ]
+if [[ -z "$LAMP_DISTRO" || ! -d "$LAMP_PATH/$LAMP_DISTRO" ]]
 then
   echo "Unsupported distro"
   exit 1
 fi
 
 LAMP_DISTRO_CODENAME="$(get_distro_codename)"
-if [ -z "$LAMP_DISTRO_CODENAME" ]
+if [[ -z "$LAMP_DISTRO_CODENAME" ]]
 then
   echo "Missing distro codename"
   exit 1
 fi
 
 LAMP_DISTRO_ID="$(get_distro_id)"
-if [ -z "$LAMP_DISTRO_ID" ]
+if [[ -z "$LAMP_DISTRO_ID" ]]
 then
   echo "Missing distro ID"
   exit 1
@@ -36,26 +43,27 @@ LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
 
 if [[ -n "$LAMP_CONFIG_FQDN" ]]
 then
-  LAMP_FQDN="${LAMP_CONFIG_FQDN}"
+  LAMP_FQDN="$LAMP_CONFIG_FQDN"
 else
   LAMP_FQDN="$(hostname -f)"
 fi
 
 IFS=" " read -r -a LAMP_FQDN_EXPANDED <<< "$(echo "$LAMP_FQDN" | tr '.' ' ')"
+if [[ ${#LAMP_FQDN_EXPANDED[@]} -lt 2 ]]
+then
+  console_log lamp "Invalid FQDN, declare the LAMP_CONFIG_FQDN option with the valid domain or configure the valid FQDN in the OS."
+  exit 1
+fi
+
 if [[ ${#LAMP_FQDN_EXPANDED[@]} -gt 2 ]]
 then
   console_log lamp "The FQDN is a subdomain and you are not allowed to use it."
   console_log lamp "It will be subtracted to continue with the installation."
   LAMP_FQDN="$(echo "${LAMP_FQDN_EXPANDED[@]}" | awk '{print $(NF-1),$NF}' | tr ' ' '.')"
   console_log lamp "Now the FQDN for lamp is: $LAMP_FQDN"
-
-elif [[ ${#LAMP_FQDN_EXPANDED[@]} -lt 2 ]]
-then
-  console_log lamp "Invalid FQDN, declare the LAMP_CONFIG_FQDN option with the valid domain or configure the valid FQDN in the OS."
-  exit 1
 fi
 
-LAMP_TLD="$(echo "$LAMP_FQDN" | awk -F'.' '{print $2}')"
+LAMP_TLD="$(echo "$LAMP_FQDN" | awk -F'.' '{print $NF}')"
 if [[ -n "$LAMP_CONFIG_FQDN" ]]
 then
   console_log lamp "The FQDN for lamp is: $LAMP_FQDN"
@@ -90,6 +98,7 @@ else
         unset 'LAMP_IP_ADDRESSES[i]'
       fi
     done
+    unset i
   fi
 
   if [[ ${#LAMP_IP_ADDRESSES[@]} -lt 1 ]]
@@ -119,5 +128,5 @@ LAMP_INCLUDE_NAMES=(
 
 for LAMP_INCLUDE_NAME in "${LAMP_INCLUDE_NAMES[@]}"
 do
-  include "${LAMP_INCLUDE_NAME}"
+  include "$LAMP_INCLUDE_NAME"
 done
