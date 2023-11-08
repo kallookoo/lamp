@@ -42,7 +42,8 @@ else
   LAMP_FQDN="$(hostname -f)"
 fi
 
-IFS=" " read -r -a LAMP_FQDN_EXPANDED <<<"$(echo "$LAMP_FQDN" | tr '.' ' ')"
+make_array LAMP_FQDN_EXPANDED "${LAMP_FQDN/./ }"
+
 if [[ ${#LAMP_FQDN_EXPANDED[@]} -lt 2 ]]; then
   console_log lamp "Invalid FQDN, declare the LAMP_CONFIG_FQDN option with the valid domain or configure the valid FQDN in the OS."
   exit 1
@@ -73,7 +74,7 @@ else
   if [[ -n "$LAMP_CONFIG_IP_ADDRESS" ]]; then
     LAMP_IP_ADDRESSES=("$LAMP_CONFIG_IP_ADDRESS")
   else
-    IFS=" " read -r -a LAMP_IP_ADDRESSES <<<"$(hostname -I)"
+    make_array LAMP_IP_ADDRESSES "$(hostname -I)"
   fi
 
   if [[ ${#LAMP_IP_ADDRESSES[@]} -gt 1 ]]; then

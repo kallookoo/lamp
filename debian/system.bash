@@ -19,6 +19,16 @@ function apt_install() {
   done
 }
 
+function apt_remove() {
+  console_log "$LAMP_INCLUDE_NAME" "Checking and Uninstalling dependencies if already installed"
+  while [[ $# -gt 0 ]]; do
+    if package_exists "$1"; then
+      apt purge --autoremove -y "$1"
+    fi
+    shift
+  done
+}
+
 function add_firewall_rule() {
   if command_exists ufw && ! ufw status verbose | grep -qw "$1"; then
     ufw allow "$1"
@@ -43,11 +53,10 @@ for package in "$LAMP_DISTRO_PATH/"*; do
 done
 
 console_log "$LAMP_INCLUDE_NAME" "Checking and Full Upgrading system after including the new repositories"
+
 (
-  if
-    LANG=
-    apt update 2>&1 | grep -q "packages can be upgraded"
-  then
+  LANG=
+  if apt-get update | grep -q "packages can be upgraded"; then
     apt -y full-upgrade
   fi
 )

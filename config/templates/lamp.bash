@@ -25,7 +25,11 @@
 # LAMP_CONFIG_BIND_FORWARDERS=()
 
 # Default version of PHP
+# Note: By default is the system.
 # LAMP_CONFIG_PHP_VERSION=""
+
+# Additionals PHP versions
+# LAMP_CONFIG_PHP_VERSIONS=()
 
 # Additional PHP extensions
 # See the distro-name/php/install.bash file to view the predefined extensions.
@@ -33,6 +37,11 @@
 #       the same package for all versions, as is the case with php-pear.
 #       Otherwise any numerical prefix will be removed.
 # LAMP_CONFIG_PHP_EXTENSIONS=()
+
+# Uninstall unspecified versions in LAMP_CONFIG_PHP_VERSIONS
+# Default value is no
+# Note: For security, only the packages used by the lamp are uninstalled.
+# LAM_CONFIG_PHP_UNINSTALL=""
 
 # Directory to use for all domains ( virtualhosts )
 # LAMP_CONFIG_VIRTUALHOSTS_DIRECTORY=""
@@ -44,7 +53,7 @@
 # See the extras/config.inc.lamp.php file.
 # Default value is yes
 # Note: This file will only be created if it does not exist.
-# LAMP_CONFIG_PMA_CONFIGURATIONS=""
+# LAMP_CONFIG_PMA_ENABLE_CONFIGURATIONS=""
 
 # phpMyAdmin Cron type to execute the auto update.
 # Possible values: hourly, daily, weekly, monthly, disabled

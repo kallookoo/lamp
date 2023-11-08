@@ -11,8 +11,8 @@
 
 | **Packages** | **Version**                |
 | ------------ | -------------------------- |
-| Apache       | 2.4                        |
-| PHP          | 7.4 and above.             |
+| Apache       | Latest                     |
+| PHP          | User Defined or System     |
 | MariaDB      | Latest or User Defined     |
 | phpMyAdmin   | Latest                     |
 | Mailhog      | Latest                     |
@@ -21,13 +21,13 @@
 
 ## Configurations
 
-Copy [config/templates/lamp.bash](config/templates/lamp.bash) file to `config/lamp.bash` and edit for customize installation.
+Copy `config/templates/lamp.bash` file to `config/lamp.bash` and edit for customize the installation.
 
-Optionally copy [config/templates/config.inc.lamp.php](config/templates/config.inc.lamp.php) to `config/config.inc.lamp.php` and edit for customize the phpMyAdmin.
+Optionally copy `config/templates/config.inc.lamp.php` to `config/config.inc.lamp.php` and edit for customize the phpMyAdmin.
 
 ## Installation
 
-Run the `[install](install)` with root user or sudo. Example: `sudo ./install`
+Run the `./install` with root user or sudo.
 
 
 ## Commands

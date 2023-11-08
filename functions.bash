@@ -3,7 +3,7 @@
 #
 
 function in_array() {
-  if [[ $# -gt 2 ]] && [[ "$(printf '%s\n' "${@}" | grep -cx -- "$1")" -gt "1" ]]; then
+  if [[ $# -gt 2 ]] && [[ "$(printf '%s\n' "$@" | grep -cx -- "$1")" -gt "1" ]]; then
     return 0
   fi
   return 1
@@ -71,4 +71,11 @@ function console_log() {
       printf "\n%s\n* %s\n" "$header" "${@}"
     fi
   fi
+}
+
+function make_array() {
+  local name="$1"
+  shift
+  # shellcheck disable=SC2229
+  IFS=" " read -r -a "$name" <<<"$@"
 }
