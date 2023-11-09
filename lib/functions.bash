@@ -29,14 +29,14 @@ function include() {
     case "$LAMP_DISTRO" in
     ubuntu)
       LAMP_DISTRO="debian"
-      LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
+      LAMP_DISTRO_PATH="$LAMP_PATH/distros/$LAMP_DISTRO"
       ;;
     esac
 
     if [[ "$distro" != "$LAMP_DISTRO" ]]; then
       include "$name"
       LAMP_DISTRO="$distro"
-      LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
+      LAMP_DISTRO_PATH="$LAMP_PATH/distros/$LAMP_DISTRO"
     fi
   fi
 }

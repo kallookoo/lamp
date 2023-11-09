@@ -49,9 +49,9 @@ LAMP_PHP_PACKAGES_TEMPLATE=(
   "php__VERSION__-xml"
   "php__VERSION__-zip"
 )
-LAMP_PHP_VERSIONS=()
 LAMP_PHP_PACKAGES=()
 
+LAMP_PHP_VERSIONS=()
 if [[ ${#LAMP_CONFIG_PHP_VERSIONS[@]} -gt 0 ]]; then
   make_array LAMP_PHP_VERSIONS "${LAMP_CONFIG_PHP_VERSIONS[@]}"
   for i in "${!LAMP_PHP_VERSIONS[@]}"; do
@@ -61,7 +61,6 @@ if [[ ${#LAMP_CONFIG_PHP_VERSIONS[@]} -gt 0 ]]; then
     fi
   done
 fi
-
 LAMP_PHP_VERSIONS+=("$LAMP_PHP_VERSION")
 
 for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do

@@ -14,10 +14,10 @@ LAMP_PATH="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
 if [[ -f "$LAMP_PATH/config/lamp.bash" ]]; then
   source "$LAMP_PATH/config/lamp.bash"
 fi
-source "$LAMP_PATH/functions.bash"
+source "$LAMP_PATH/lib/functions.bash"
 
 LAMP_DISTRO="$(get_distro)"
-if [[ -z "$LAMP_DISTRO" || ! -d "$LAMP_PATH/$LAMP_DISTRO" ]]; then
+if [[ -z "$LAMP_DISTRO" || ! -d "$LAMP_PATH/distros/$LAMP_DISTRO" ]]; then
   echo "Unsupported distro"
   exit 1
 fi
@@ -34,7 +34,7 @@ if [[ -z "$LAMP_DISTRO_ID" ]]; then
   exit 1
 fi
 
-LAMP_DISTRO_PATH="$LAMP_PATH/$LAMP_DISTRO"
+LAMP_DISTRO_PATH="$LAMP_PATH/distros/$LAMP_DISTRO"
 
 if [[ -n "$LAMP_CONFIG_FQDN" ]]; then
   LAMP_FQDN="$LAMP_CONFIG_FQDN"
