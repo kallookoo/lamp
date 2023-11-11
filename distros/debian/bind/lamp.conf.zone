@@ -1,15 +1,15 @@
 $TTL    604800
-@   IN  SOA LAMP_TLD.   root.LAMP_TLD.  (
-    LAMP_DNS_SERIAL ; Serial number of zone file
+@   IN  SOA __TLD__.   root.__TLD__.  (
+    __LAMP_DNS_SERIAL__ ; Serial number of zone file
     604800 ; Refresh
     86400 ; Retry
     2419200 ; Expire
     604800  ) ; Negative Cache TTL
 ;
-    IN  NS  ns1.LAMP_TLD.
-    IN  NS  ns2.LAMP_TLD.
-    IN  A   LAMP_IP_ADDRESS
+    IN  NS  ns1.__TLD__.
+    IN  NS  ns2.__TLD__.
+    IN  A   __LAMP_IP_ADDRESS__
 ;
-ns1 IN  A   LAMP_IP_ADDRESS
-ns2 IN  A   LAMP_IP_ADDRESS
-*   IN  A   LAMP_IP_ADDRESS
+ns1 IN  A   __LAMP_IP_ADDRESS__
+ns2 IN  A   __LAMP_IP_ADDRESS__
+*   IN  A   __LAMP_IP_ADDRESS__

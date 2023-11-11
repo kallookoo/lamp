@@ -41,8 +41,8 @@ mariadb </var/www/html/phpmyadmin/sql/create_tables.sql
 
 # Always create the config.inc.php to update the changes.
 cp -f "$LAMP_DISTRO_PATH/phpmyadmin/config.inc.php" /var/www/html/phpmyadmin/config.inc.php
-sed -i "s/PMA_PASSWORD/$PMA_PASSWORD/" /var/www/html/phpmyadmin/config.inc.php
-sed -i "s/PMA_LANG/$LAMP_PMA_LANG/" /var/www/html/phpmyadmin/config.inc.php
+sed -i "s/__PMA_PASSWORD__/$PMA_PASSWORD/" /var/www/html/phpmyadmin/config.inc.php
+sed -i "s/__PMA_LANG__/$LAMP_PMA_LANG/" /var/www/html/phpmyadmin/config.inc.php
 
 if ! boolval "${LAMP_CONFIG_PMA_ENABLE_CONFIGURATIONS:-yes}"; then
   rm -f /var/www/html/phpmyadmin/config.inc.lamp.php

@@ -11,201 +11,207 @@ if [[ "${1:-no}" == "-v" ]]; then
 fi
 
 function in_array() {
-  if [[ $# -gt 2 ]] && [[ "$(printf '%s\n' "${@}" | grep -cx -- "$1")" -gt "1" ]]; then
+  if [[ $# -gt 2 ]] && [[ "$(printf '%s\n' "$@" | grep -cx -- "$1")" -gt "1" ]]; then
     return 0
   fi
   return 1
 }
 
 function validate_domain() {
-  local domain="${1}"
-  local regex="(?=^.{1,254}$)(^(?>(?:[\d+\.]+)?[a-z0-9_\-]{1,63}\.?)+(?:[a-z]{2,})$)"
-  if echo "$domain" | grep -qP "$regex"; then
-    return 0
+  local domain="${1:-}"
+  if [[ -n "$domain" ]]; then
+    local regex="(?=^.{1,254}$)(^(?>(?:[\d+\.]+)?[a-z0-9_\-]{1,63}\.?)+(?:[a-z]{2,})$)"
+    if echo "$domain" | grep -qP "$regex"; then
+      return 0
+    fi
   fi
-  echo -e "\e[0;31mInvalid format for \"$domain\" domain\e[0m"
   return 1
 }
 
-function list_domains() {
+function add_domain_tld() {
+  local domain="${1:-}"
+  if [[ -n "$domain" ]] && ! [[ "$domain" =~ __TLD__$ ]]; then
+    domain+=".__TLD__"
+  fi
+  echo "$domain"
+}
+
+function restart_service() {
+  local service_name
+  if [[ $# -gt 0 ]]; then
+    while [[ $# -gt 0 ]]; do
+      service_name="$1"
+      if [[ "php" == "$1" ]]; then
+        service_name="php*-fpm"
+      fi
+      find /lib/systemd/system/ -name "$service_name" -exec sh -c 'basename "$1" | xargs -r systemctl restart' \;
+      shift
+    done
+  else
+    restart_service php mailhog mariadb apache2
+  fi
+}
+
+function list_a2_vhosts() {
   local domain
   local message
   for domain in /etc/apache2/sites-available/*.conf; do
     domain="$(basename "${domain/.conf//}")"
     message="- $domain"
     if [[ -f "/etc/apache2/sites-enabled/$domain.conf" ]]; then
-      message+=" (Enabled)"
+      message+=" [ Enabled ]"
     else
-      message+=" (Disabled)"
+      message+=" [ Disabled ]"
     fi
-    echo "$message"
+    LAMP_MESSAGES+=("$message")
   done
-}
 
-function create_subdomain() {
-  local domain
-  local subdomain="$1"
-
-  domain="$(sed -E 's/^[^\.]+\.//' <<<"$subdomain")"
-
-  mkcert create "$domain"
-
-  if [[ -f "/etc/apache2/sites-available/$domain.conf" ]]; then
-    sed -i 's/ServerAlias.*//' "/etc/apache2/sites-available/$domain.conf"
+  if [[ -z "$message" ]]; then
+    LAMP_MESSAGES+=("No virtual host was found.")
   fi
-
-  sed -i 's/ServerAlias.*//' "/etc/apache2/sites-available/$subdomain.conf"
-  sed -i "s/webmaster.*/webmaster@$domain/" "/etc/apache2/sites-available/$subdomain.conf"
-  sed -i "s@certificates.*@certificates/$domain.pem@" "/etc/apache2/sites-available/$subdomain.conf"
 }
 
-function create_domain() {
-  local domain=""
-  local database=""
-  local php_version=""
-  local with_db=no
+function create_a2_vhosts() {
+  local vhost # Used for declare the domain or subdomain
+  local domain
+  local database
+  local create_database
+  local php_version
+
   while [[ $# -gt 0 ]]; do
-    case "$1" in
-    -db)
-      with_db=yes
+    create_database="no"
+    if [[ "$1" == "-db" ]]; then
+      create_database="yes"
       shift
-      ;;
-    -php)
-      if ! echo "${2:-}" | grep -qE '^[0-9]\.[0-9]$'; then
-        echo -e "\e[0;31mThe default version of PHP will be used.\e[0m"
-      else
-        if [[ ! -f "/etc/php/$2/fpm/pool.d/user.conf" ]]; then
-          echo -e "\e[0;31mThe PHP $2 version is not installed, using the default.\e[0m"
-        else
+    fi
+    if [[ "$1" == "-php" ]]; then
+      php_version="__PHP_VERSION__"
+      if [[ "${2:-}" =~ ^[0-9]\.[0-9]$ ]]; then
+        if [[ -f "/etc/php/$2/fpm/pool.d/user.conf" ]]; then
           php_version="$2"
+          php_message="The \"$2\" version of PHP will be used."
+        else
+          php_message="The \"$2\" version of PHP is not installed, using the default."
         fi
         shift
+      else
+        php_message="The default version of PHP will be used."
       fi
       shift
-      ;;
-    *)
-      break
-      ;;
-    esac
-  done
+    fi
 
-  if [[ -z "${1:-}" || "${1:0:1}" == "-" ]]; then
-    echo -e "\e[0;31minvalid format of the arguments\e[0m"
-    exit 1
-  fi
-
-  domain="$1"
-  database="$1"
-  if echo "$domain" | grep -q "@"; then
-    database="$(echo "$domain" | awk -F "@" '{print $2}')"
-    domain="$(echo "$domain" | awk -F "@" '{print $1}')"
-  fi
-
-  domain="$domain.LAMP_TLD"
-  if validate_domain "$domain"; then
-    cat <<EOF >"/etc/apache2/sites-available/$domain.conf"
+    if [[ -n "$1" && "$1" =~ ^[a-z0-9][a-z0-9] ]]; then
+      database="$(awk -F'@' '{print $2}' <<<"$1@$1")"
+      vhost="$(add_domain_tld "$(awk -F'@' '{print $1}' <<<"$1")")"
+      domain="$(awk -F'.' 'END{print $(NF-1)"."$NF}' <<<"$vhost")"
+      if validate_domain "$vhost"; then
+        cat <<EOF >"/etc/apache2/sites-available/$vhost.conf"
 <VirtualHost *:443>
-  ServerName $domain
-  ServerAlias *.$domain
+  ServerName $vhost
+  ServerAlias *.$vhost
   ServerAdmin "webmaster@$domain"
-  DocumentRoot "/VIRTUALHOSTS_DIR/$domain"
+  DocumentRoot "__VIRTUALHOSTS_DIRECTORY__/$vhost"
   SSLCertificateFile "/opt/mkcert/certificates/$domain.pem"
 EOF
-    if [[ -n "$php_version" ]]; then
-      cat <<EOF >>"/etc/apache2/sites-available/$domain.conf"
-  <Directory /VIRTUALHOSTS_DIR/$domain/>
+        if [[ -n "$php_version" ]]; then
+          cat <<EOF >>"/etc/apache2/sites-available/$vhost.conf"
+  <Directory __VIRTUALHOSTS_DIRECTORY__/$vhost/>
     <FilesMatch ".+\.ph(ar|p|tml)$">
       SetHandler "proxy:unix:/run/php/php$php_version-fpm-user.sock|fcgi://localhost"
     </FilesMatch>
   </Directory>
 EOF
-    fi
-    echo "</VirtualHost>" >>"/etc/apache2/sites-available/$domain.conf"
-    if [[ "$(echo "$domain" | awk -F'.' 'END{print NF}')" -eq "2" ]]; then
-      mkcert create "$domain"
-    else
-      create_subdomain "$domain"
-    fi
-    enable_domain "$domain"
-    if [[ "$with_db" == "yes" && -n "${database}" ]]; then
-      mariadb -e "CREATE DATABASE IF NOT EXISTS $database;"
-    fi
-    RESTART_APACHE=yes
-  fi
-  shift
-  if [[ $# -gt 0 ]]; then
-    create_domain "$@"
-  fi
-}
+        fi
+        echo "</VirtualHost>" >>"/etc/apache2/sites-available/$domain.conf"
 
-function delete_domain() {
-  local domain=""
-  local database=""
-  local with_db=no
-
-  if [[ "$1" == "-db" ]]; then
-    with_db="yes"
-    shift
-  fi
-
-  domain="$1"
-  if echo "$domain" | grep -q "@"; then
-    database="$(echo "$domain" | awk -F "@" '{print $2}')"
-    domain="$(echo "$domain" | awk -F "@" '{print $1}')"
-  fi
-
-  domain="$domain.LAMP_TLD"
-  if validate_domain "$domain"; then
-    find /etc/apache2/sites-* -name "$domain.conf" -delete
-    if [[ "$(echo "$domain" | awk -F'.' 'END{print NF}')" -ne "2" ]]; then
-      domain=$(echo "$domain" | sed -E 's/^[^\.]+\.//')
-    fi
-
-    if [[ "$(find /etc/apache2/sites-available -name "*$domain.conf" | wc -l)" -eq "0" ]]; then
-      mkcert delete "$domain"
-    fi
-
-    RESTART_APACHE=yes
-    if [[ "$with_db" == "yes" && -n "$database" ]]; then
-      mariadb -e "DROP DATABASE IF EXISTS $database;"
-    fi
-  fi
-  shift
-  if [[ $# -gt 0 ]]; then
-    delete_domain "$@"
-  fi
-}
-
-function enable_domain() {
-  local domain
-  while [[ $# -gt 0 ]]; do
-    domain="$1"
-    if ! echo "$domain" | grep -qE "\.LAMP_TLD$"; then
-      domain="$domain.LAMP_TLD"
-    fi
-    if validate_domain "$domain" && [[ -f "/etc/apache2/sites-available/$domain.conf" ]]; then
-      mkdir -p "/VIRTUALHOSTS_DIR/$domain"
-      ln -sf "/etc/apache2/sites-available/$domain.conf" "/etc/apache2/sites-enabled/$domain.conf"
-      RESTART_APACHE=yes
+        if [[ "$(find /etc/apache2/sites-available -name "*$domain*" | wc -l)" -gt "1" ]]; then
+          sed -i 's/ServerAlias.*//' "/etc/apache2/sites-available/$vhost.conf"
+          sed -i 's/ServerAlias.*//' "/etc/apache2/sites-available/$domain.conf"
+        fi
+        if [[ "$create_database" == "yes" ]]; then
+          LAMP_MESSAGES+=("[ $vhost ] - Create the \"$database\" database if not exists.")
+          LAMP_MESSAGES+=("[ $vhost ] - $(mariadb -e "CREATE DATABASE IF NOT EXISTS \`$database\`;" 2>&1)")
+        fi
+        LAMP_MESSAGES+=("[ $vhost ] - $(mkcert create "$domain")")
+        LAMP_MESSAGES+=("[ $vhost ] - $(enable_a2_vhosts "$vhost")")
+        LAMP_MESSAGES+=("[ $vhost ] - $php_message")
+      else
+        LAMP_MESSAGES+=("[ $vhost ] - Invalid format for the domain.")
+      fi
     fi
     shift
   done
 }
 
-function disable_domain() {
+function delete_a2_vhosts() {
   local domain
-  while [[ "$#" -gt "0" ]]; do
-    domain="$1"
-    if ! echo "$domain" | grep -qE "\.LAMP_TLD$"; then
-      domain="$domain.LAMP_TLD"
+  local database
+  local delete_database
+
+  while [[ $# -gt 0 ]]; do
+    delete_database="no"
+    if [[ "$1" == "-db" ]]; then
+      delete_database="yes"
+      shift
     fi
+    if [[ -n "$1" ]]; then
+      domain="$1"
+      database="$(echo "$domain@$domain" | awk -F'@' '{print $2}')"
+      domain="$(add_domain_tld "$(echo "$domain" | awk -F'@' '{print $1}')")"
+      if validate_domain "$domain"; then
+        find /etc/apache2/sites-* -name "$domain.conf" -delete
+        if [[ "$(find /etc/apache2/sites-available -name "*$domain.conf" | wc -l)" -eq "0" ]]; then
+          LAMP_MESSAGES+=("[ $vhost ] - $(mkcert delete "$(awk -F'.' 'END{print $(NF-1)"."$NF}' <<<"$domain")")")
+        fi
+
+        RESTART_APACHE=yes
+        if [[ "$delete_database" == "yes" ]]; then
+          LAMP_MESSAGES+=("[ $domain ] - Drop the \"$database\" database if exists.")
+          LAMP_MESSAGES+=("[ $domain ] - $(mariadb -e "DROP DATABASE IF EXISTS \`$database\`;" 2>&1)")
+        fi
+      else
+        LAMP_MESSAGES+=("[ $domain ] - Invalid format for the domain.")
+      fi
+    fi
+    shift
+  done
+}
+
+function enable_a2_vhosts() {
+  local domain
+  while [[ $# -gt 0 ]]; do
+    domain="$(add_domain_tld "$1")"
+    if validate_domain "$domain"; then
+      if [[ -f "/etc/apache2/sites-available/$domain.conf" ]]; then
+        mkdir -p "__VIRTUALHOSTS_DIRECTORY__/$domain"
+        ln -sf "/etc/apache2/sites-available/$domain.conf" "/etc/apache2/sites-enabled/$domain.conf"
+        LAMP_MESSAGES+=("[ $domain ] - The \"$domain\" virtual host is enabled.")
+        RESTART_APACHE=yes
+      else
+        LAMP_MESSAGES+=("[ $domain ] - The \"$domain\" virtual host not exists.")
+      fi
+    else
+      LAMP_MESSAGES+=("[ $domain ] - Invalid format for the domain.")
+    fi
+    shift
+  done
+}
+
+function disable_a2_vhosts() {
+  local domain
+
+  while [[ $# -gt 0 ]]; do
+    domain="$(add_domain_tld "$1")"
     if validate_domain "$domain"; then
       if [[ -f "/etc/apache2/sites-enabled/$domain.conf" ]]; then
         rm -f "/etc/apache2/sites-enabled/$domain.conf"
+        LAMP_MESSAGES+=("[ $domain ] - The \"$domain\" virtual host is disabled.")
         RESTART_APACHE=yes
-      else
-        echo "The $domain domain is already disabled"
+      elif [[ ! -f "/etc/apache2/sites-available/$domain.conf" ]]; then
+        LAMP_MESSAGES+=("[ $domain ] - The \"$domain\" virtual host not exists.")
       fi
+    else
+      LAMP_MESSAGES+=("[ $domain ] - Invalid format for the domain.")
     fi
     shift
   done
@@ -217,42 +223,26 @@ function usage() {
   echo "       sudo lamp [options] domain@database domain ..."
   echo
   echo "OPTIONS:"
-  echo " restart - Restart all services or service if defined"
-  echo "           Since the service name for php is unique for each version"
+  echo " restart - Restart all services or service if defined."
+  echo "           Since the service name for php is unique for each version."
   echo "           you can specify php as the service name and all will be restarted."
-  echo "           Also support multiples services."
-  echo " create  - Create or recreate if exists the VirtualHost for domain"
-  echo "    -db  -- Creates a database, if not specified the domain is used"
+  echo " create  - Create or recreate the virtual host for domain."
+  echo "    -db  -- Creates a database, if not specified the domain is used."
   echo "   -php  -- Define the php version."
   echo "            If it is not installed or specified then the default will be used."
-  echo " delete  - Delete the VirtualHost for domain"
+  echo " delete  - Delete the virtual host for domain."
   echo "    -db  -- Delete the database, if you do not specify it used the domain."
-  echo " enable  - Enable the VirtualHost for domain"
-  echo " disable - Disable the VirtualHost for domain"
-  echo " list    - List all VirtualHosts"
-  echo " help    - Print this text and exit"
+  echo " enable  - Enable the virtual host for domain."
+  echo " disable - Disable the virtual host for domain."
+  echo " list    - List all virtual hosts created."
+  echo " help    - Print this text and exit."
   echo
   echo "* When a command has options, they must be specified per domain."
   echo "* The domain cannot contain the TLD, the previously configured TLD is automatically included."
-  echo "* Use \"/VIRTUALHOSTS_DIR/domain.LAMP_TLD\" for the DocumentRoot and create the directory if not exists."
+  echo "* Use \"__VIRTUALHOSTS_DIRECTORY__/domain.__TLD__\" for the DocumentRoot and create the directory if not exists."
   echo "* You can create separate subdomains but because the mkcert does not support it, the certificate will be created for the domain."
   echo "* When a subdomain is created and the domain exists, the domain alias (ServerAlias) is removed."
   echo "* Use -v as the first argument to enable debugging of the bash script."
-}
-
-function restart_service() {
-  if ! [[ "$#" -gt "0" ]]; then
-    restart_service php mailhog mariadb apache2
-    return 0
-  fi
-  while [[ "$#" -gt "0" ]]; do
-    if [[ "php" == "$1" ]]; then
-      find /lib/systemd/system/ -name "php*-fpm*" -exec sh -c 'basename "$1" | xargs -r systemctl restart' \;
-    else
-      systemctl restart "$1"
-    fi
-    shift
-  done
 }
 
 ACTION=help
@@ -262,29 +252,33 @@ ACTIONS=(
   "delete"
   "enable"
   "disable"
-  "show"
   "list"
-  "help"
 )
 
-if in_array "${1:-empty}" "${ACTIONS[@]}"; then
+if [[ -n "$1" ]] && in_array "$1" "${ACTIONS[@]}"; then
   ACTION="$1"
   shift
 fi
 
+LAMP_MESSAGES=()
+
 if [[ "$ACTION" == "help" ]]; then
   usage
-elif [[ "$ACTION" == "show" ]]; then
-  echo "Deprecated option, use list"
 elif [[ "$ACTION" == "list" ]]; then
-  list_domains
+  list_a2_vhosts
 elif [[ "$(id -u)" -ne "0" ]]; then
-  echo "Please, run this with the root user or sudo."
+  LAMP_MESSAGES+=("Please, run this with the root user or sudo.")
 elif [[ "$ACTION" == "restart" ]]; then
   restart_service "$@"
 elif [[ $# -gt 0 ]]; then
-  "${ACTION}_domain" "$@"
-  if [[ -n "$RESTART_APACHE" ]]; then
+  "${ACTION}_a2_vhosts" "$@"
+  if [[ "${RESTART_APACHE:-no}" == "yes" ]]; then
     restart_service php apache2
   fi
+else
+  LAMP_MESSAGES+=("Missing arguments for the \"$ACTION\" command.")
+fi
+
+if [[ "${#LAMP_MESSAGES[@]}" -gt "0" ]]; then
+  printf '%s\n' "${LAMP_MESSAGES[@]}"
 fi

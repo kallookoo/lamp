@@ -9,7 +9,7 @@
  * Global phpMyAdmin configurations
  */
 $cfg['TempDir']     = '/tmp/';
-$cfg['DefaultLang'] = 'PMA_LANG';
+$cfg['DefaultLang'] = '__PMA_LANG__';
 
 /**
  * Servers configuration
@@ -29,7 +29,7 @@ $cfg['Servers'][ $i ]['password']  = 'root';
 
 /** User used to manipulate with storage */
 $cfg['Servers'][ $i ]['controluser'] = 'pma';
-$cfg['Servers'][ $i ]['controlpass'] = 'PMA_PASSWORD';
+$cfg['Servers'][ $i ]['controlpass'] = '__PMA_PASSWORD__';
 
 /** Storage database and tables */
 $cfg['Servers'][ $i ]['pmadb']             = 'phpmyadmin';

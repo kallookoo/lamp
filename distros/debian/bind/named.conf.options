@@ -3,5 +3,5 @@ options {
     dnssec-validation no;
     auth-nxdomain no;    # conform to RFC1035
     listen-on-v6 { any; };
-    # LAMP_BIND_FORWARDERS
+    # __LAMP_BIND_FORWARDERS__
 };

@@ -32,9 +32,9 @@ a2enmod -q \
 cp -f "$LAMP_DISTRO_PATH/apache/apache2.conf" /etc/apache2/apache2.conf
 find /var/log/apache2 /etc/apache2/conf-enabled -mindepth 1 -delete
 find /etc/apache2/sites-enabled /etc/apache2/sites-available -mindepth 1 -name "*default*" -delete
-sed -i "s@VIRTUALHOSTS_DIR@$LAMP_VIRTUALHOSTS_DIRECTORY@" /etc/apache2/apache2.conf
-sed -i "s/PHP_VERSION/$LAMP_PHP_VERSION/" /etc/apache2/apache2.conf
-sed -i "s/DEFAULT_DOMAIN/$LAMP_FQDN/" /etc/apache2/apache2.conf
+sed -i "s@__VIRTUALHOSTS_DIRECTORY__@$LAMP_VIRTUALHOSTS_DIRECTORY@g" /etc/apache2/apache2.conf
+sed -i "s/__PHP_VERSION__/$LAMP_PHP_VERSION/g" /etc/apache2/apache2.conf
+sed -i "s/__DEFAULT_DOMAIN__/$LAMP_FQDN/g" /etc/apache2/apache2.conf
 
 LAMP_APACHE_ENABLE_MMAP="Off"
 if boolval "${LAMP_CONFIG_APACHE_ENABLE_MMAP:-no}"; then

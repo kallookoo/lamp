@@ -60,16 +60,13 @@ function boolval() {
 LAMP_HEADER=""
 function console_log() {
   if [[ $# -gt 1 ]]; then
-    local header="$1"
+    local header="${1^^}"
     shift
-    header="[ $(echo "$header" | tr '[:lower:]' '[:upper:]') ]"
-
-    if [ "$LAMP_HEADER" == "$header" ]; then
-      printf "* %s\n" "${@}"
-    else
+    if [ "$LAMP_HEADER" != "$header" ]; then
       LAMP_HEADER="$header"
-      printf "\n%s\n* %s\n" "$header" "${@}"
+      printf "\n[ %s ]\n" "$LAMP_HEADER"
     fi
+    printf "* %s\n" "$@"
   fi
 }
 

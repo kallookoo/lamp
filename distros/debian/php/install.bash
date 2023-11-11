@@ -117,7 +117,15 @@ for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
       cp -f "/usr/lib/php/$PHP_VERSION/php.ini-development" "/etc/php/$PHP_VERSION/fpm/php.ini"
     fi
     if [[ -f "/etc/php/$PHP_VERSION/fpm/conf.d/95-php.ini" ]]; then
-      sed -i "s@TIME_ZONE@$TIME_ZONE@" "/etc/php/$PHP_VERSION/fpm/conf.d/95-php.ini"
+      sed -i "s@__PHP_VERSION__@$PHP_VERSION@" "/etc/php/$PHP_VERSION/fpm/conf.d/95-php.ini"
+      sed -i "s@__TIME_ZONE__@$TIME_ZONE@" "/etc/php/$PHP_VERSION/fpm/conf.d/95-php.ini"
+    fi
+
+    find "/etc/php/$PHP_VERSION/fpm/conf.d" -name "99XX-php*" -delete
+    if [[ -f "$LAMP_PATH/config/99XX-php$PHP_VERSION.ini" ]]; then
+      cp -f "$LAMP_PATH/config/99XX-php$PHP_VERSION.ini" "/etc/php/$PHP_VERSION/fpm/conf.d/99XX-php$PHP_VERSION.ini"
+    elif [[ -f "$LAMP_PATH/config/99XX-php.ini" ]]; then
+      cp -f "$LAMP_PATH/config/99XX-php.ini" "/etc/php/$PHP_VERSION/fpm/conf.d/99XX-php.ini"
     fi
 
     if [[ -f "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ]]; then
@@ -128,7 +136,7 @@ for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
       sed -i 's@fpm.sock@fpm-user.sock@' "/etc/php/$PHP_VERSION/fpm/pool.d/user.conf"
     fi
     if [[ -f "/etc/php/$PHP_VERSION/fpm/php-fpm.conf" ]]; then
-      sed -i 's@^error_log.*@error_log = /var/log/php-fpm.log@' "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
+      sed -i "s@^error_log.*@error_log = /var/log/php$PHP_VERSION-fpm.log@" "/etc/php/$PHP_VERSION/fpm/php-fpm.conf"
     fi
   fi
 done

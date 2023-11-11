@@ -12,8 +12,8 @@
 | **Packages** | **Version**                |
 | ------------ | -------------------------- |
 | Apache       | Latest                     |
-| PHP          | User Defined or System     |
-| MariaDB      | Latest or User Defined     |
+| PHP          | User Defined               |
+| MariaDB      | User Defined               |
 | phpMyAdmin   | Latest                     |
 | Mailhog      | Latest                     |
 | mkcert       | Latest                     |
@@ -21,9 +21,14 @@
 
 ## Configurations
 
-Copy `config/templates/lamp.bash` file to `config/lamp.bash` and edit for customize the installation.
+* Copy `config/templates/lamp.bash` file to `config/lamp.bash` and edit for customize the installation.
 
-Optionally copy `config/templates/config.inc.lamp.php` to `config/config.inc.lamp.php` and edit for customize the phpMyAdmin.
+## Optional configurations
+
+* Copy `config/templates/config.inc.lamp.php` to `config/config.inc.lamp.php` and edit for customize the phpMyAdmin.
+* Copy `config/templates/99XX-php.ini` to `config/99XX-php.ini` and edit for customize the PHP versions.
+* Copy `config/templates/99XX-php.ini` to `config/99XX-phpPHP_VERSION.ini` and edit for customize the PHP version.
+> PHP_VERSION must be replaced by the version you want to customize.
 
 ## Installation
 
@@ -43,4 +48,4 @@ Run the `./install` with root user or sudo.
 * The mkcert if installed in `/opt/mkcert` and the original mkcert binary if `/opt/mkcert/bin/current`.
 * The bind9 only if installed when the TLD if not the localhost.
 * By default when if used the bind9 the file `/etc/dhcp/dhclient.conf` is modified to add the ip in the nameservers.
-* The version of MariaDB is declared in the configuration file or the one declared in your installation file. It is usually the latest.
+* The "User Defiend" version is declared in the configuration file (It is usually the latest) or the one declared in your installation file.

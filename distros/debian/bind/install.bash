@@ -7,9 +7,9 @@ if [[ "$LAMP_TLD" == "localhost" ]]; then
 else
   apt_install bind9
   rsync -azh --exclude="install.bash" "$LAMP_DISTRO_PATH/bind/" /etc/bind/
-  sed -i "s/LAMP_TLD/$LAMP_TLD/g" /etc/bind/lamp.conf /etc/bind/lamp.conf.zone
-  sed -i "s/LAMP_DNS_SERIAL/$(date +'%s')/g" /etc/bind/lamp.conf.zone
-  sed -i "s/LAMP_IP_ADDRESS/$LAMP_IP_ADDRESS/g" /etc/bind/lamp.conf.zone
+  sed -i "s/__TLD__/$LAMP_TLD/g" /etc/bind/lamp.conf /etc/bind/lamp.conf.zone
+  sed -i "s/__LAMP_DNS_SERIAL__/$(date +'%s')/g" /etc/bind/lamp.conf.zone
+  sed -i "s/__LAMP_IP_ADDRESS__/$LAMP_IP_ADDRESS/g" /etc/bind/lamp.conf.zone
   if [[ ${#LAMP_CONFIG_BIND_FORWARDERS} -gt 0 ]]; then
     LAMP_BIND_FORWARDERS=""
     for LAMP_BIND_FORWARDER in "${LAMP_CONFIG_BIND_FORWARDERS[@]}"; do
@@ -18,7 +18,7 @@ else
       fi
     done
     if [[ -n "$LAMP_BIND_FORWARDERS" ]]; then
-      sed -i "s/# LAMP_BIND_FORWARDERS/forwarders { $LAMP_BIND_FORWARDERS };/" /etc/bind/named.conf.options
+      sed -i "s/# __LAMP_BIND_FORWARDERS__/forwarders { $LAMP_BIND_FORWARDERS };/" /etc/bind/named.conf.options
     else
       console_log "$LAMP_INCLUDE_NAME" "The forwarders was not enabled as it did not have a correct format."
     fi
