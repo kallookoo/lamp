@@ -29,6 +29,10 @@ function apt_remove() {
   done
 }
 
+function apt_cache() {
+  LANG="" apt-cache "$@"
+}
+
 function add_firewall_rule() {
   if command_exists ufw && ! ufw status verbose | grep -qw "$1"; then
     ufw allow "$1"

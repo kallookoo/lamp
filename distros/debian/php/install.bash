@@ -3,33 +3,34 @@
 #
 
 function get_php_available_versions() {
-  LANG="" apt-cache policy php*-fpm |
-    grep -P -A 2 'php[^\-]+\-fpm' |
-    grep -P -B 2 'Candidate: [^\(]+' |
-    grep -oP 'php[^\-]+\-fpm' |
-    sort |
-    grep -oP '[0-9\.]+' |
-    xargs -r printf '%s '
+  apt_cache policy php*-fpm |
+    grep -oP 'Candidate[^0-9]+([0-9]:)?[0-9]\.[0-9]' |
+    awk -F':' '{sub( /[^0-9\.]+/, "" ); print $NF}' |
+    sort -n
 }
 
 make_array LAMP_PHP_AVAILABLE_VERSIONS "$(get_php_available_versions)"
 
 function get_php_versions() {
-  LANG="" apt-cache policy php*-fpm |
-    grep -oP 'php[^\-]+\-fpm' |
-    sort |
-    grep -oP '[0-9\.]+' |
-    xargs -r printf '%s '
+  apt_cache policy php*-fpm |
+    grep -oP 'php[0-9]\.[0-9]' |
+    awk -F'-' '{sub(/[^0-9\.]+/, ""); print $1}' |
+    sort -n
 }
 
 make_array LAMP_PHP_ALL_VERSIONS "$(get_php_versions)"
 
-LAMP_PHP_VERSION="${LAMP_CONFIG_PHP_VERSION:-}"
-if ! in_array "$LAMP_PHP_VERSION" "${LAMP_PHP_AVAILABLE_VERSIONS[@]}"; then
-  LAMP_PHP_VERSION="$(apt-cache show php-fpm | grep -m1 -oEw 'php[0-9].*' | sed -E 's/[^0-9\.]+//g')"
-  console_log "$LAMP_INCLUDE_NAME" "There is no PHP version, the system default version will be used."
+LAMP_PHP_VERSION="$(apt_cache policy php-fpm | grep -oP 'Candidate[^\+]+' | awk -F':' '{print $NF}')"
+if [[ -z "${LAMP_CONFIG_PHP_VERSION:-}" ]]; then
+  console_log "$LAMP_INCLUDE_NAME" "No PHP version was configured, the \"$LAMP_PHP_VERSION\" version will be used."
+elif ! in_array "$LAMP_PHP_VERSION" "${LAMP_PHP_AVAILABLE_VERSIONS[@]}"; then
+  console_log "$LAMP_INCLUDE_NAME" "There is no candidate PHP version to install, the \"$LAMP_PHP_VERSION\" version will be used."
+else
+  LAMP_PHP_VERSION="$LAMP_CONFIG_PHP_VERSION"
 fi
 
+LAMP_PHP_VERSIONS=()
+LAMP_PHP_PACKAGES=()
 LAMP_PHP_PACKAGES_TEMPLATE=(
   "php__VERSION__-fpm"
   # EXTENSIONS
@@ -49,9 +50,8 @@ LAMP_PHP_PACKAGES_TEMPLATE=(
   "php__VERSION__-xml"
   "php__VERSION__-zip"
 )
-LAMP_PHP_PACKAGES=()
 
-LAMP_PHP_VERSIONS=()
+# shellcheck disable=SC2153
 if [[ ${#LAMP_CONFIG_PHP_VERSIONS[@]} -gt 0 ]]; then
   make_array LAMP_PHP_VERSIONS "${LAMP_CONFIG_PHP_VERSIONS[@]}"
   for i in "${!LAMP_PHP_VERSIONS[@]}"; do
@@ -61,7 +61,8 @@ if [[ ${#LAMP_CONFIG_PHP_VERSIONS[@]} -gt 0 ]]; then
     fi
   done
 fi
-LAMP_PHP_VERSIONS+=("$LAMP_PHP_VERSION")
+
+make_array LAMP_PHP_VERSIONS "${LAMP_PHP_VERSIONS[@]}" "$LAMP_PHP_VERSION"
 
 for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
   for PHP_PACKAGE in "${LAMP_PHP_PACKAGES_TEMPLATE[@]}"; do
@@ -103,7 +104,7 @@ fi
 
 apt_install php-pear "${LAMP_PHP_PACKAGES[@]}"
 
-phpdismod -s cli xdebug
+phpdismod -s cli xdebug >/dev/null 2>&1
 
 mkdir -p /etc/ssl
 curl -s https://curl.se/ca/cacert.pem -o /etc/ssl/cacert.pem
@@ -112,6 +113,8 @@ find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >>/etc/ssl/cacert.pem
 TIME_ZONE="$(cat /etc/timezone)"
 for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
   if [[ -d "/etc/php/$PHP_VERSION/fpm" ]]; then
+    console_log "$LAMP_INCLUDE_NAME" "Generating configurations for the \"$PHP_VERSION\" version."
+
     rsync -azh "$LAMP_DISTRO_PATH/php/fpm/" "/etc/php/$PHP_VERSION/fpm/"
     if [[ -f "/usr/lib/php/$PHP_VERSION/php.ini-development" ]]; then
       cp -f "/usr/lib/php/$PHP_VERSION/php.ini-development" "/etc/php/$PHP_VERSION/fpm/php.ini"
@@ -121,11 +124,11 @@ for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
       sed -i "s@__TIME_ZONE__@$TIME_ZONE@" "/etc/php/$PHP_VERSION/fpm/conf.d/95-php.ini"
     fi
 
-    find "/etc/php/$PHP_VERSION/fpm/conf.d" -name "99XX-php*" -delete
-    if [[ -f "$LAMP_PATH/config/99XX-php$PHP_VERSION.ini" ]]; then
-      cp -f "$LAMP_PATH/config/99XX-php$PHP_VERSION.ini" "/etc/php/$PHP_VERSION/fpm/conf.d/99XX-php$PHP_VERSION.ini"
-    elif [[ -f "$LAMP_PATH/config/99XX-php.ini" ]]; then
-      cp -f "$LAMP_PATH/config/99XX-php.ini" "/etc/php/$PHP_VERSION/fpm/conf.d/99XX-php.ini"
+    find "/etc/php/$PHP_VERSION/fpm/conf.d" -name "999-php*" -delete
+    if [[ -f "$LAMP_PATH/config/php$PHP_VERSION.ini" ]]; then
+      cp -f "$LAMP_PATH/config/php$PHP_VERSION.ini" "/etc/php/$PHP_VERSION/fpm/conf.d/999-php$PHP_VERSION.ini"
+    elif [[ -f "$LAMP_PATH/config/php.ini" ]]; then
+      cp -f "$LAMP_PATH/config/php.ini" "/etc/php/$PHP_VERSION/fpm/conf.d/999-php.ini"
     fi
 
     if [[ -f "/etc/php/$PHP_VERSION/fpm/pool.d/www.conf" ]]; then
@@ -141,6 +144,6 @@ for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
   fi
 done
 
-find /lib/systemd/system/ -name "php*-fpm*" -exec sh -c 'basename "$1" | xargs -r systemctl restart' \;
+find /lib/systemd/system/ -name "php*-fpm*" -exec bash -c 'systemctl restart "${@##*/}"' _ {} +
 mkdir -p /var/www/html
 cp -f "$LAMP_DISTRO_PATH/php/info.php" /var/www/html/info.php

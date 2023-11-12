@@ -37,14 +37,14 @@ function add_domain_tld() {
 }
 
 function restart_service() {
-  local service_name
+  local service
   if [[ $# -gt 0 ]]; then
     while [[ $# -gt 0 ]]; do
-      service_name="$1"
+      service="$1"
       if [[ "php" == "$1" ]]; then
-        service_name="php*-fpm"
+        service="php*-fpm"
       fi
-      find /lib/systemd/system/ -name "$service_name" -exec sh -c 'basename "$1" | xargs -r systemctl restart' \;
+      find /lib/systemd/system/ -name "$service*" -exec bash -c 'systemctl restart "${@##*/}"' _ {} +
       shift
     done
   else
