@@ -48,4 +48,4 @@ Run the `./install` with root user or sudo.
 * The mkcert if installed in `/opt/mkcert` and the original mkcert binary if `/opt/mkcert/bin/current`.
 * The bind9 only if installed when the TLD if not the localhost.
 * By default when if used the bind9 the file `/etc/dhcp/dhclient.conf` is modified to add the ip in the nameservers.
-* The "User Defiend" version is declared in the configuration file (It is usually the latest) or the one declared in your installation file.
+* The "User Defined" version is declared in the configuration file (It is usually the latest) or the one declared in your installation file.
