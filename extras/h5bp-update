@@ -1,31 +1,48 @@
 #!/usr/bin/env bash
-
 #
-# Update the h5bp files from the git repository if exists
+# Update the h5bp files from the git repository if exists in parent directory
 #
 
-LAMP_PATH="$(cd -P -- "$(dirname -- "$(dirname -- "$0")")" && pwd -P)"
-H5BP_SRC="$(sed -r 's@/lamp@@' <<<"$LAMP_PATH")/server-configs-apache/h5bp"
-if [[ -d "$H5BP_SRC/.git" ]] && command -v git >/dev/null 2>&1; then
-  # Use subshell to hidden all outputs.
-  LAST_COMMIT="$(cd "$H5BP_SRC" && git pull -f origin main >/dev/null 2>&1 && git rev-parse HEAD)"
-
-  DISTROS=(
-    "debian"
-  )
-
-  for DISTRO in "${DISTROS[@]}"; do
-    if [[ -d "$LAMP_PATH/$DISTRO/apache/h5bp" ]]; then
-      if [[ -n "$LAST_COMMIT" && -f "$LAMP_PATH/$DISTRO/apache/h5bp.conf" ]]; then
-        sed -i "s/H5BP_COMMIT.*/H5BP_COMMIT: $LAST_COMMIT/" "$LAMP_PATH/$DISTRO/apache/h5bp.conf"
-      fi
-      find "$LAMP_PATH/$DISTRO/apache/h5bp" -mindepth 1 -type f |
-        while read -r H5BP_LAMP_FILE; do
-          H5BP_SRC_FILE="$H5BP_SRC/$(sed -r 's@/.*h5bp/@@' <<<"$H5BP_LAMP_FILE")"
-          if [[ -f "$H5BP_SRC_FILE" ]]; then
-            cp -f "$H5BP_SRC_FILE" "$H5BP_LAMP_FILE"
-          fi
-        done
-    fi
-  done
+if ! command -v git >/dev/null 2>&1; then
+  echo "Missing git command"
+  exit
 fi
+
+DISTROS=(
+  "debian"
+)
+LAMP_PATH="$(dirname -- "$(cd -P -- "$(dirname -- "$0")" && pwd -P)")"
+H5BP_SRC="${LAMP_PATH/\/lamp/}/server-configs-apache"
+
+if [[ ! -d "$H5BP_SRC/.git" ]]; then
+  echo "Missing git server-configs-apache directory"
+  exit
+fi
+
+# Use subshell to hidden all outputs.
+LAST_COMMIT="$(cd "$H5BP_SRC" && git pull -f origin main >/dev/null 2>&1 && git rev-parse HEAD)"
+if ! [[ "$LAST_COMMIT" =~ ^[a-z0-9]{40}$ ]]; then
+  echo "Missing git commit"
+  exit
+fi
+
+for DISTRO in "${DISTROS[@]}"; do
+  DISTRO_H5BP="$LAMP_PATH/distros/$DISTRO/apache/h5bp"
+  if [[ ! -d "$DISTRO_H5BP" ]]; then
+    echo "Missing h5bp directory in $DISTRO"
+  elif [[ ! -f "$DISTRO_H5BP.conf" ]]; then
+    echo "Missing h5bp.conf file in $DISTRO"
+  elif grep -q "$LAST_COMMIT" "$DISTRO_H5BP.conf"; then
+    echo "Already updated files in $DISTRO"
+  else
+    # Use perl to prevent error using sed in macos
+    perl -pi -e "s/H5BP_COMMIT.*/H5BP_COMMIT: $LAST_COMMIT/" "$DISTRO_H5BP.conf"
+    find "$DISTRO_H5BP" -mindepth 1 -type f |
+      while read -r H5BP_LAMP_FILE; do
+        H5BP_SRC_FILE="$H5BP_SRC/h5bp${H5BP_LAMP_FILE/$DISTRO_H5BP/}"
+        if [[ -f "$H5BP_SRC_FILE" ]]; then
+          cp -f "$H5BP_SRC_FILE" "$H5BP_LAMP_FILE"
+        fi
+      done
+  fi
+done
