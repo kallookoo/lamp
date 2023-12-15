@@ -50,7 +50,7 @@
 # LAMP_CONFIG_PMA_LANG=""
 
 # Add the phpmyadmin custom configurations
-# See the extras/config.inc.lamp.php file.
+# See the config/templates/config.inc.lamp.php file.
 # Default value is yes
 # Note: This file will only be created if it does not exist.
 # LAMP_CONFIG_PMA_ENABLE_CONFIGURATIONS=""
