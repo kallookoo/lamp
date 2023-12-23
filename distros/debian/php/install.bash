@@ -113,7 +113,7 @@ find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >>/etc/ssl/cacert.pem
 TIME_ZONE="$(cat /etc/timezone)"
 for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
   if [[ -d "/etc/php/$PHP_VERSION/fpm" ]]; then
-    console_log "$LAMP_INCLUDE_NAME" "Generating configurations for the \"$PHP_VERSION\" version."
+    console_log "$LAMP_INCLUDE_NAME" "Generating configurations for version \"$PHP_VERSION\"."
 
     rsync -azh "$LAMP_DISTRO_PATH/php/fpm/" "/etc/php/$PHP_VERSION/fpm/"
     if [[ -f "/usr/lib/php/$PHP_VERSION/php.ini-development" ]]; then
