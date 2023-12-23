@@ -17,6 +17,8 @@ function apt_install() {
     fi
     shift
   done
+  # Always run the fix broken.
+  apt install -f >/dev/null 2>&1
 }
 
 function apt_remove() {
