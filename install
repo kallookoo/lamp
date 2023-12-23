@@ -98,27 +98,16 @@ fi
 
 console_log lamp "The Public IP for lamp is: $(wget -q -O - https://ipinfo.io/ip)"
 
-# Define the LAMP_VIRTUALHOSTS_DIRECTORY variable globally, because is used in various bash files.
-LAMP_VIRTUALHOSTS_DIRECTORY="${LAMP_CONFIG_VIRTUALHOSTS_DIRECTORY:-}"
-if [ -z "$LAMP_VIRTUALHOSTS_DIRECTORY" ]; then
-  LAMP_VIRTUALHOSTS_DIRECTORY="/home/$SUDO_USER/www/"
-fi
-LAMP_VIRTUALHOSTS_DIRECTORY="/$(sed -r 's@(^/|/$)@@g' <<<"${LAMP_VIRTUALHOSTS_DIRECTORY}")"
-if [ ! -d "$LAMP_VIRTUALHOSTS_DIRECTORY" ]; then
-  mkdir -p "$LAMP_VIRTUALHOSTS_DIRECTORY"
-  chown -R "$SUDO_USER:$SUDO_USER" "$LAMP_VIRTUALHOSTS_DIRECTORY"
-fi
-
 LAMP_INCLUDE_NAMES=(
   system
-  mkcert
-  memcached
+  # mkcert
+  # memcached
   php
   apache
-  mariadb
-  phpmyadmin
-  mailhog
-  bind
+  # mariadb
+  # phpmyadmin
+  # mailhog
+  # bind
   bin
 )
 

@@ -5,6 +5,16 @@
 apt_install apache2
 systemctl stop apache2
 
+LAMP_VIRTUALHOSTS_DIRECTORY="${LAMP_CONFIG_VIRTUALHOSTS_DIRECTORY:-}"
+if [ -z "$LAMP_VIRTUALHOSTS_DIRECTORY" ]; then
+  LAMP_VIRTUALHOSTS_DIRECTORY="/home/$SUDO_USER/www/"
+fi
+LAMP_VIRTUALHOSTS_DIRECTORY="/$(sed -r 's@(^/|/$)@@g' <<<"${LAMP_VIRTUALHOSTS_DIRECTORY}")"
+if [ ! -d "$LAMP_VIRTUALHOSTS_DIRECTORY" ]; then
+  mkdir -p "$LAMP_VIRTUALHOSTS_DIRECTORY"
+  chown -R "$SUDO_USER:$SUDO_USER" "$LAMP_VIRTUALHOSTS_DIRECTORY"
+fi
+
 a2enmod -q \
   deflate \
   expires \
