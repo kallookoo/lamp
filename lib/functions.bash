@@ -74,5 +74,5 @@ function make_array() {
   local name="$1"
   shift
   # shellcheck disable=SC2229
-  IFS=" " read -r -a "$name" <<<"$(printf '%s\n' "$@" | uniq | xargs -r printf '%s ')"
+  IFS=" " read -r -a "$name" <<<"$(printf '%s\n' "$@" | awk '!u[$0]++' | xargs -r printf '%s ')"
 }
