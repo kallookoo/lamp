@@ -2,7 +2,7 @@
 # Declare the MariaDB Repository
 #
 
-LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-11.1}"
+LAMP_MARIADB_VERSION="${LAMP_CONFIG_MARIADB_VERSION:-11.2}"
 if [[ "${LAMP_MARIADB_VERSION}" =~ ^[0-9\.]+$ ]]; then
   LAMP_MARIADB_REPO_URL="https://archive.mariadb.org/mariadb-$LAMP_MARIADB_VERSION/repo/$LAMP_DISTRO"
   find /etc/apt/sources.list.d -type f -name "mariadb*" -delete

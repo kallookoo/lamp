@@ -60,9 +60,6 @@ done
 
 console_log "$LAMP_INCLUDE_NAME" "Checking and Full Upgrading system after including the new repositories"
 
-(
-  LANG=
-  if apt-get update | grep -q "packages can be upgraded"; then
-    apt -y full-upgrade
-  fi
-)
+if apt update 2>&1 | grep -q "upgradable"; then
+  apt -y full-upgrade
+fi

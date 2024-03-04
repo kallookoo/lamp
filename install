@@ -100,14 +100,14 @@ console_log lamp "The Public IP for lamp is: $(wget -q -O - https://ipinfo.io/ip
 
 LAMP_INCLUDE_NAMES=(
   system
-  # mkcert
-  # memcached
+  mkcert
+  memcached
   php
   apache
-  # mariadb
-  # phpmyadmin
-  # mailhog
-  # bind
+  mariadb
+  phpmyadmin
+  mailhog
+  bind
   bin
 )
 
