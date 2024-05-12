@@ -106,7 +106,8 @@ LAMP_INCLUDE_NAMES=(
   apache
   mariadb
   phpmyadmin
-  mailhog
+  mailhog # Deprecated, only exits to remove it.
+  mailpit
   bind
   bin
 )

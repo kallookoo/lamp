@@ -1,0 +1,16 @@
+[Unit]
+Description=Mailpit
+Documentation=https://github.com/axllent/mailpit
+After=syslog.target network.target
+
+[Service]
+ExecStart=/usr/local/bin/mailpit
+EnvironmentFile=/etc/mailpit/mailpit.env
+Restart=always
+RestartSec=10
+SyslogIdentifier=mailpit
+User=mailpit
+Group=mailpit
+
+[Install]
+WantedBy=multi-user.target

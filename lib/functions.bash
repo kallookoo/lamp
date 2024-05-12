@@ -23,6 +23,8 @@ function include() {
 
   if [ -f "$LAMP_DISTRO_PATH/$name.bash" ]; then
     source "$LAMP_DISTRO_PATH/$name.bash"
+  elif [ -f "$LAMP_DISTRO_PATH/$name/uninstall.bash" ]; then
+    source "$LAMP_DISTRO_PATH/$name/uninstall.bash"
   elif [ -f "$LAMP_DISTRO_PATH/$name/install.bash" ]; then
     source "$LAMP_DISTRO_PATH/$name/install.bash"
   elif [ "repositories" != "$name" ]; then
@@ -75,4 +77,22 @@ function make_array() {
   shift
   # shellcheck disable=SC2229
   IFS=" " read -r -a "$name" <<<"$(printf '%s\n' "$@" | awk '!u[$0]++' | xargs -r printf '%s ')"
+}
+
+function question() {
+  if boolval "${LAMP_CONFIG_AUTO_UNINSTALL:-no}"; then
+    return 0
+  fi
+  while [[ -z "$LAMP_CONFIG_AUTO_UNINSTALL" ]]; do
+    read -r -p "$(console_log "$LAMP_INCLUDE_NAME" "$@") [y/n]: " answer
+    case $answer in
+    [Yy]*)
+      return 0
+      ;;
+    [Nn]*)
+      return 1
+      ;;
+    esac
+  done
+  return 1
 }

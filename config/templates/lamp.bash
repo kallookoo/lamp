@@ -78,3 +78,8 @@
 # See: https://httpd.apache.org/docs/current/mod/core.html#enablemmap
 # Default value is: no
 # LAMP_CONFIG_APACHE_ENABLE_SENDFILE=""
+
+# Auto uninstall extra packages or dependencies when uninstall the any packages
+# When no if defined the script aks for this.
+# Default value is: no
+# LAMP_CONFIG_AUTO_UNINSTALL=""
