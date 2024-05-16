@@ -96,7 +96,7 @@ else
   console_log lamp "The IP for lamp is: $LAMP_IP_ADDRESS"
 fi
 
-console_log lamp "The Public IP for lamp is: $(wget -q -O - https://ipinfo.io/ip)"
+console_log lamp "The Public IP for lamp is: $(get_public_ip)"
 
 LAMP_INCLUDE_NAMES=(
   system

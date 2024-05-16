@@ -59,6 +59,15 @@ function boolval() {
   echo "$1" | grep -qiP '^(0|y(es)?|on|true)$'
 }
 
+function get_public_ip() {
+  local ip
+  ip="$(wget --no-dns-cache --tries=1 --timeout=5 -qO- ipinfo.io/ip)"
+  if ! [[ "$ip" =~ ^[1-9] ]]; then
+    ip="could not be obtained"
+  fi
+  echo "$ip"
+}
+
 LAMP_HEADER=""
 function console_log() {
   if [[ $# -gt 1 ]]; then
