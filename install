@@ -45,31 +45,31 @@ fi
 make_array LAMP_FQDN_EXPANDED "${LAMP_FQDN/./ }"
 
 if [[ ${#LAMP_FQDN_EXPANDED[@]} -lt 2 ]]; then
-  console_log lamp "Invalid FQDN, declare the LAMP_CONFIG_FQDN option with the valid domain or configure the valid FQDN in the OS."
+  console_log "Invalid FQDN, declare the LAMP_CONFIG_FQDN option with the valid domain or configure the valid FQDN in the OS."
   exit 1
 fi
 
 if [[ ${#LAMP_FQDN_EXPANDED[@]} -gt 2 ]]; then
-  console_log lamp "The FQDN is a subdomain and you are not allowed to use it."
-  console_log lamp "It will be subtracted to continue with the installation."
+  console_log "The FQDN is a subdomain and you are not allowed to use it."
+  console_log "It will be subtracted to continue with the installation."
   LAMP_FQDN="$(echo "${LAMP_FQDN_EXPANDED[@]}" | awk '{print $(NF-1),$NF}' | tr ' ' '.')"
-  console_log lamp "Now the FQDN for lamp is: $LAMP_FQDN"
+  console_log "Now the FQDN for lamp is: $LAMP_FQDN"
 fi
 
 LAMP_TLD="$(echo "$LAMP_FQDN" | awk -F'.' '{print $NF}')"
 if [[ -n "$LAMP_CONFIG_FQDN" ]]; then
-  console_log lamp "The FQDN for lamp is: $LAMP_FQDN"
+  console_log "The FQDN for lamp is: $LAMP_FQDN"
 elif [[ -n "${LAMP_CONFIG_TLD:-}" ]] && [[ "$LAMP_TLD" != "$LAMP_CONFIG_TLD" ]]; then
-  console_log lamp "The LAMP_CONFIG_TLD and the current TLD they do not match, the one defined in the LAM_CONFIG_TLD option will be used"
+  console_log "The LAMP_CONFIG_TLD and the current TLD they do not match, the one defined in the LAM_CONFIG_TLD option will be used"
   LAMP_TLD="$LAMP_CONFIG_TLD"
   LAMP_FQDN="$(echo "$LAMP_FQDN" | awk -F'.' '{print $1}').$LAMP_TLD"
-  console_log lamp "The FQDN for lamp is: $LAMP_FQDN"
+  console_log "The FQDN for lamp is: $LAMP_FQDN"
 else
-  console_log lamp "The FQDN for lamp is: $LAMP_FQDN"
+  console_log "The FQDN for lamp is: $LAMP_FQDN"
 fi
 
 if [[ "$LAMP_TLD" == "localhost" ]]; then
-  console_log lamp "The IP for lamp is: 127.0.0.1"
+  console_log "The IP for lamp is: 127.0.0.1"
 else
   if [[ -n "$LAMP_CONFIG_IP_ADDRESS" ]]; then
     LAMP_IP_ADDRESSES=("$LAMP_CONFIG_IP_ADDRESS")
@@ -78,7 +78,7 @@ else
   fi
 
   if [[ ${#LAMP_IP_ADDRESSES[@]} -gt 1 ]]; then
-    console_log lamp "Multiples IP's detected, find the valid IP"
+    console_log "Multiples IP's detected, validating the IPv4"
     for i in "${!LAMP_IP_ADDRESSES[@]}"; do
       if ! [[ "${LAMP_IP_ADDRESSES[i]}" =~ ^([0-9]{1,3}\.){3}([0-9]{1,3})$ ]]; then
         unset 'LAMP_IP_ADDRESSES[i]'
@@ -87,16 +87,16 @@ else
     unset i
   fi
 
-  if [[ ${#LAMP_IP_ADDRESSES[@]} -lt 1 ]]; then
-    console_log lamp "Missing IP v4, declare the LAMP_CONFIG_IP_ADDRESS option to select the correct IP"
+  if [[ ${#LAMP_IP_ADDRESSES[@]} -ne 1 ]]; then
+    console_log "Declare the LAMP_CONFIG_IP_ADDRESS option to select the correct IP"
     exit 1
   fi
 
   LAMP_IP_ADDRESS="${LAMP_IP_ADDRESSES[0]}"
-  console_log lamp "The IP for lamp is: $LAMP_IP_ADDRESS"
+  console_log "The IP for lamp is: $LAMP_IP_ADDRESS"
 fi
 
-console_log lamp "The Public IP for lamp is: $(get_public_ip)"
+console_log "The Public IP for lamp is: $(get_public_ip)"
 
 LAMP_INCLUDE_NAMES=(
   system

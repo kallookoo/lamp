@@ -22,9 +22,9 @@ make_array LAMP_PHP_ALL_VERSIONS "$(get_php_versions)"
 
 LAMP_PHP_VERSION="$(apt_cache policy php-fpm | grep -oP 'Candidate[^\+]+' | awk -F':' '{print $NF}')"
 if [[ -z "${LAMP_CONFIG_PHP_VERSION:-}" ]]; then
-  console_log "$LAMP_INCLUDE_NAME" "No PHP version was configured, the \"$LAMP_PHP_VERSION\" version will be used."
+  console_log "No PHP version was configured, the \"$LAMP_PHP_VERSION\" version will be used."
 elif ! in_array "$LAMP_PHP_VERSION" "${LAMP_PHP_AVAILABLE_VERSIONS[@]}"; then
-  console_log "$LAMP_INCLUDE_NAME" "There is no candidate PHP version to install, the \"$LAMP_PHP_VERSION\" version will be used."
+  console_log "There is no candidate PHP version to install, the \"$LAMP_PHP_VERSION\" version will be used."
 else
   LAMP_PHP_VERSION="$LAMP_CONFIG_PHP_VERSION"
 fi
@@ -56,7 +56,7 @@ if [[ ${#LAMP_CONFIG_PHP_VERSIONS[@]} -gt 0 ]]; then
   make_array LAMP_PHP_VERSIONS "${LAMP_CONFIG_PHP_VERSIONS[@]}"
   for i in "${!LAMP_PHP_VERSIONS[@]}"; do
     if ! in_array "${LAMP_PHP_VERSIONS[i]}" "${LAMP_PHP_AVAILABLE_VERSIONS[@]}"; then
-      console_log "$LAMP_INCLUDE_NAME" "The ${LAMP_PHP_VERSIONS[i]} not is available."
+      console_log "The ${LAMP_PHP_VERSIONS[i]} not is available."
       unset 'LAMP_PHP_VERSIONS[i]'
     fi
   done
@@ -113,7 +113,7 @@ find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >>/etc/ssl/cacert.pem
 TIME_ZONE="$(cat /etc/timezone)"
 for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
   if [[ -d "/etc/php/$PHP_VERSION/fpm" ]]; then
-    console_log "$LAMP_INCLUDE_NAME" "Generating configurations for version \"$PHP_VERSION\"."
+    console_log "Generating configurations for version \"$PHP_VERSION\"."
 
     rsync -azh "$LAMP_DISTRO_PATH/php/fpm/" "/etc/php/$PHP_VERSION/fpm/"
     if [[ -f "/usr/lib/php/$PHP_VERSION/php.ini-development" ]]; then

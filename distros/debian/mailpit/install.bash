@@ -6,9 +6,9 @@ if [[ -f /lib/systemd/system/mailpit.service ]]; then
   systemctl stop mailpit
 fi
 
-console_log "$LAMP_INCLUDE_NAME" "The installer will be executed"
+console_log "The installer will be executed"
 bash < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh) | while read -r line; do
-  console_log "$LAMP_INCLUDE_NAME" "$line"
+  console_log "$line"
 done
 unset line
 

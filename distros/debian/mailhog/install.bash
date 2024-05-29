@@ -15,7 +15,7 @@ if [[ -f /lib/systemd/system/mailhog.service ]]; then
   systemctl stop mailhog
 fi
 
-console_log "$LAMP_INCLUDE_NAME" "Building the latest binaries"
+console_log "Building the latest binaries"
 
 # Build and Install with custom GO enviroment to clean after is installed
 (

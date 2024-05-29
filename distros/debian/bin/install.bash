@@ -3,9 +3,9 @@
 #
 
 if [ -f /usr/local/bin/lamp ]; then
-  console_log "$LAMP_INCLUDE_NAME" "Upgrading lamp binary"
+  console_log "Upgrading lamp binary"
 else
-  console_log "$LAMP_INCLUDE_NAME" "Installing lamp binary"
+  console_log "Installing lamp binary"
   mkdir -p /usr/local/bin
 fi
 

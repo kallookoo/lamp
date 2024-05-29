@@ -62,7 +62,7 @@
 
 # MariaDB version
 # See available version in https://mariadb.org
-# Default value is 11.2 ( checked in January 2024 )
+# Default value is 11.3 ( checked in May 2024 )
 # LAMP_CONFIG_MARIADB_VERSION=""
 
 # Enable the Apache h5bp configuration

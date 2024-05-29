@@ -61,24 +61,26 @@ function boolval() {
 
 function get_public_ip() {
   local ip
-  ip="$(wget --no-dns-cache --tries=1 --timeout=5 -qO- ipinfo.io/ip)"
+  ip="$(wget --no-dns-cache --tries=1 --timeout=15 -qO- https://ipinfo.io/ip)"
   if ! [[ "$ip" =~ ^[1-9] ]]; then
-    ip="could not be obtained"
+    ip="Could not be obtained"
   fi
   echo "$ip"
 }
 
+function run_in_c() {
+  LC_MESSAGES=C "$@"
+}
+
 LAMP_HEADER=""
 function console_log() {
-  if [[ $# -gt 1 ]]; then
-    local header="${1^^}"
-    shift
-    if [ "$LAMP_HEADER" != "$header" ]; then
-      LAMP_HEADER="$header"
-      printf "\n[ %s ]\n" "$LAMP_HEADER"
-    fi
-    printf "* %s\n" "$@"
+  local header="${LAMP_INCLUDE_NAME:-lamp}"
+  header="${header^^}"
+  if [ "$LAMP_HEADER" != "$header" ]; then
+    LAMP_HEADER="$header"
+    printf "\n[ %s ]\n" "$LAMP_HEADER"
   fi
+  printf "* %s\n" "$@"
 }
 
 function make_array() {
@@ -93,7 +95,7 @@ function question() {
     return 0
   fi
   while [[ -z "$LAMP_CONFIG_AUTO_UNINSTALL" ]]; do
-    read -r -p "$(console_log "$LAMP_INCLUDE_NAME" "$@") [y/n]: " answer
+    read -r -p "$(console_log "$@") [y/n]: " answer
     case $answer in
     [Yy]*)
       return 0

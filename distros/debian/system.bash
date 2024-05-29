@@ -3,14 +3,14 @@
 #
 
 function package_exists() {
-  if [[ "$(dpkg --dry-run -l "$1" 2>/dev/null | grep -Ec '^ii')" -gt "0" ]]; then
-    return 0
+  if apt_cache policy "$1" | grep -q 'Installed: (none)'; then
+    return 1
   fi
-  return 1
+  return 0
 }
 
 function apt_install() {
-  console_log "$LAMP_INCLUDE_NAME" "Checking and Installing dependencies if not already installed"
+  console_log "Checking and Installing dependencies if not already installed"
   while [[ $# -gt 0 ]]; do
     if ! package_exists "$1"; then
       apt install -y "$1"
@@ -22,7 +22,7 @@ function apt_install() {
 }
 
 function apt_remove() {
-  console_log "$LAMP_INCLUDE_NAME" "Checking and Uninstalling dependencies if already installed"
+  console_log "Checking and Uninstalling dependencies if already installed"
   while [[ $# -gt 0 ]]; do
     if package_exists "$1"; then
       apt purge --autoremove -y "$1"
@@ -32,7 +32,7 @@ function apt_remove() {
 }
 
 function apt_cache() {
-  LANG="" apt-cache "$@"
+  run_in_c apt-cache "$@"
 }
 
 function add_firewall_rule() {
@@ -58,7 +58,7 @@ for package in "$LAMP_DISTRO_PATH/"*; do
   fi
 done
 
-console_log "$LAMP_INCLUDE_NAME" "Checking and Full Upgrading system after including the new repositories"
+console_log "Checking and Full Upgrading system after including the new repositories"
 
 if apt update 2>&1 | grep -q "upgradable"; then
   apt -y full-upgrade

@@ -23,9 +23,9 @@ fi
 
 chmod +x "$LAMP_DISTRO_PATH/phpmyadmin/phpmyadmin"
 if [[ ! -d /var/www/html/phpmyadmin ]]; then
-  console_log "$LAMP_INCLUDE_NAME" "Installing phpMyAdmin"
+  console_log "Installing phpMyAdmin"
 else
-  console_log "$LAMP_INCLUDE_NAME" "Upgrading phpMyAdmin"
+  console_log "Upgrading phpMyAdmin"
 fi
 
 # Always create the tables to avoid missing.

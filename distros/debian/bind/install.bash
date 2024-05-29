@@ -20,7 +20,7 @@ else
     if [[ -n "$LAMP_BIND_FORWARDERS" ]]; then
       sed -i "s/# __LAMP_BIND_FORWARDERS__/forwarders { $LAMP_BIND_FORWARDERS };/" /etc/bind/named.conf.options
     else
-      console_log "$LAMP_INCLUDE_NAME" "The forwarders was not enabled as it did not have a correct format."
+      console_log "The forwarders was not enabled as it did not have a correct format."
     fi
   fi
 
