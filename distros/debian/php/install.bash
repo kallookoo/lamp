@@ -107,8 +107,8 @@ apt_install php-pear "${LAMP_PHP_PACKAGES[@]}"
 phpdismod -s cli xdebug >/dev/null 2>&1
 
 mkdir -p /etc/ssl
-curl -s https://curl.se/ca/cacert.pem -o /etc/ssl/cacert.pem
-find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >>/etc/ssl/cacert.pem
+download https://curl.se/ca/cacert.pem /etc/ssl/cacert.pem &&
+  find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >>/etc/ssl/cacert.pem
 
 TIME_ZONE="$(cat /etc/timezone)"
 for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do

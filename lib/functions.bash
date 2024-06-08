@@ -72,11 +72,10 @@ function run_in_c() {
   LC_MESSAGES=C "$@"
 }
 
-LAMP_HEADER=""
 function console_log() {
   local header="${LAMP_INCLUDE_NAME:-lamp}"
   header="${header^^}"
-  if [ "$LAMP_HEADER" != "$header" ]; then
+  if [ "${LAMP_HEADER:-}" != "$header" ]; then
     LAMP_HEADER="$header"
     printf "\n[ %s ]\n" "$LAMP_HEADER"
   fi
@@ -105,5 +104,10 @@ function question() {
       ;;
     esac
   done
+  return 1
+}
+
+function download() {
+  curl -sIL --fail -o "$2" "$1" && return 0
   return 1
 }
