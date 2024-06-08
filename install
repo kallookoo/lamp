@@ -89,6 +89,9 @@ else
 
   if [[ ${#LAMP_IP_ADDRESSES[@]} -ne 1 ]]; then
     console_log "Declare the LAMP_CONFIG_IP_ADDRESS option to select the correct IP"
+    for x in "${LAMP_IP_ADDRESSES[@]}"; do
+      console_log "Possible IP: $x"
+    done
     exit 1
   fi
 
