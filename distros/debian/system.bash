@@ -36,8 +36,15 @@ function apt_cache() {
 }
 
 function add_firewall_rule() {
-  if command_exists ufw && ! ufw status verbose | grep -qw "$1"; then
-    ufw allow "$1"
+  if ! command_exists ufw; then
+    console_log "Skipping adding rules, because not exits the ufw command"
+  elif ufw status | grep -q 'inactive'; then
+    console_log "Skipping adding rules, because the ufw is disabled"
+  elif ! ufw status verbose | grep -qw "$1"; then
+    ufw allow "$1" 2>&1 | while read -r line; do
+      console_log "$line"
+    done
+    unset line
   fi
 }
 
