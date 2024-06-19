@@ -108,6 +108,6 @@ function question() {
 }
 
 function download() {
-  curl -sIL --fail -o "$2" "$1" && return 0
+  curl --silent --location --fail --output "$2" "$1" && return 0
   return 1
 }
