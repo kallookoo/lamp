@@ -26,6 +26,7 @@
 
 ## Optional configurations
 
+* Copy `config/templates/mailpit.env` to `config/mailpit.env` and edit to customize the mailpit.
 * Copy `config/templates/config.inc.lamp.php` to `config/config.inc.lamp.php` and edit for customize the phpMyAdmin.
 * Copy `config/templates/php.ini` to `config/php.ini` and edit for customize the PHP versions.
 * Copy `config/templates/php.ini` to `config/phpPHP_VERSION.ini` and edit for customize the PHP version.
