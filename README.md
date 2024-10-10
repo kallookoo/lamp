@@ -1,6 +1,10 @@
 # (L)inux (A)pache (M)ariaDB (P)HP
 
+> [!IMPORTANT] 
 > Currently in development, use it with care and at your own risk.
+
+> [!WARNING]
+> You will no longer receive updates when migrating my developments to containers (docker).
 
 ## Available distros
 
