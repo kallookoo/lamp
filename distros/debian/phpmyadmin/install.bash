@@ -39,13 +39,14 @@ mariadb </var/www/html/phpmyadmin/sql/create_tables.sql
   echo "FLUSH PRIVILEGES;"
 ) | mariadb
 
-# Always create the config.inc.php to update the changes.
+# Always create the config.inc.php to ensure updates are applied.
 cp -f "$LAMP_DISTRO_PATH/phpmyadmin/config.inc.php" /var/www/html/phpmyadmin/config.inc.php
 sed -i "s/__PMA_PASSWORD__/$PMA_PASSWORD/" /var/www/html/phpmyadmin/config.inc.php
 sed -i "s/__PMA_LANG__/$LAMP_PMA_LANG/" /var/www/html/phpmyadmin/config.inc.php
 
 if ! boolval "${LAMP_CONFIG_PMA_ENABLE_CONFIGURATIONS:-yes}"; then
   rm -f /var/www/html/phpmyadmin/config.inc.lamp.php
-elif [[ -f "$LAMP_PATH/config/config.inc.lamp.php" && ! -f /var/www/html/phpmyadmin/config.inc.lamp.php ]]; then
+elif [[ -f "$LAMP_PATH/config/config.inc.lamp.php" ]]; then
+  # Always create the config.inc.lamp.php to ensure updates are applied.
   cp -f "$LAMP_PATH/config/config.inc.lamp.php" /var/www/html/phpmyadmin/config.inc.lamp.php
 fi
