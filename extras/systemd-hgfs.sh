@@ -4,8 +4,8 @@
 # Requirements: open-vm-tools
 #
 # Usage:
-# - bash vm-customize.sh
-# - wget https://raw.githubusercontent.com/kallookoo/lamp/refs/heads/main/extras/systemd-hgfs.sh && bash vm-customize.sh
+# - bash systemd-hgfs.sh
+# - wget https://raw.githubusercontent.com/kallookoo/lamp/refs/heads/main/extras/systemd-hgfs.sh && bash systemd-hgfs.sh
 #
 # Info: https://knowledge.broadcom.com/external/article/316336/enabling-hgfs-shared-folders-on-fusion-o.html
 
