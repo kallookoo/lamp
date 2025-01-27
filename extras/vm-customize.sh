@@ -40,7 +40,7 @@ function ensure_sudo_installed() {
 }
 
 function disable_grub_timeout() {
-  grep -qE '^GRUB_TIMEOUT=0' /etc/default/grub || return 1
+  grep -qE '^GRUB_TIMEOUT=0' /etc/default/grub && return 0
 
   if ask_question "Do you want to disable the GRUB timeout?"; then
     sed -i 's/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/' /etc/default/grub && update-grub
