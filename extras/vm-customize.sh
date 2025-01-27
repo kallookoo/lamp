@@ -55,7 +55,11 @@ function configure_static_ip() {
     return 1
   fi
 
-  iface="$(question "Enter the interface name")"
+  iface="$(question "Enter the interface network name, like eth0, ens33 or auto (auto detect)")"
+  if [[ "$iface" == "auto" ]]; then
+    echo "Detecting the default interface..."
+    iface="$(ip route get 1 | awk '{print $5}')"
+  fi
   if [[ ! "$iface" =~ ^[a-z0-9]+$ ]]; then
     echo "The interface name must be a string with lowercase letters and numbers."
     echo "Skipping the static IP configuration."
