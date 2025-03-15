@@ -7,4 +7,4 @@ if ! package_exists debsuryorg-archive-keyring; then
     dpkg -i /tmp/debsuryorg-archive-keyring.deb
 fi
 
-echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $LAMP_DISTRO_CODENAME main" >/etc/apt/sources.list.d/php.list
+echo "deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ $LAMP_DISTRO_CODENAME main" >/etc/apt/sources.list.d/php.list
