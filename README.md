@@ -3,6 +3,9 @@
 > [!IMPORTANT] 
 > Currently in development, use it with care and at your own risk.
 
+> [!NOTE]
+> For the moment it is abandoned, I am migrating to docker.
+
 ## Available distros
 
 * Debian (Tested in Virtual Maquine)
