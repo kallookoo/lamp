@@ -1,5 +1,5 @@
 #
-# Global Functions
+#  Global Functions
 #
 
 function in_array() {
@@ -11,10 +11,6 @@ function in_array() {
 
 function command_exists() {
   command -v "$1" >/dev/null 2>&1
-}
-
-function github_download_url() {
-  wget -q -O- "https://api.github.com/repos/$1/releases/latest" | grep -m 1 "browser_download_url.*$2" | cut -d '"' -f 4
 }
 
 function include() {
@@ -68,10 +64,6 @@ function get_public_ip() {
   echo "$ip"
 }
 
-function run_in_c() {
-  LC_MESSAGES=C "$@"
-}
-
 function console_log() {
   local header="${LAMP_INCLUDE_NAME:-lamp}"
   header="${header^^}"
@@ -108,6 +100,5 @@ function question() {
 }
 
 function download() {
-  curl --silent --location --fail --output "$2" "$1" && return 0
-  return 1
+  curl --silent --location --fail --output "$2" "$1"
 }
