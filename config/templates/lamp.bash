@@ -62,7 +62,8 @@
 
 # MariaDB version
 # See available version in https://mariadb.org
-# Default value is 11.4 ( checked in Aug 2024 )
+# Default value is 11 ( Used the Rolling )
+# Note: To disable the rolling version, set to exact version. (e.g. 11.4)
 # LAMP_CONFIG_MARIADB_VERSION=""
 
 # Enable the Apache h5bp configuration
