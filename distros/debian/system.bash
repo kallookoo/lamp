@@ -32,7 +32,32 @@ function apt_remove() {
 }
 
 function apt_cache() {
-  run_in_c apt-cache "$@"
+  LC_MESSAGES=C apt-cache "$@"
+}
+
+function debsuryorg_config() {
+  local keyring pkg="$1"
+  rm -f /tmp/debsuryorg-archive-keyring.deb
+  # Check download the debsuryorg-archive-keyring.deb package
+  if [[ ! -f /tmp/debsuryorg-archive-keyring.deb || $(($(date +%s) - $(stat -c %Y /tmp/debsuryorg-archive-keyring.deb))) -gt 300 ]]; then
+    rm -f /tmp/debsuryorg-archive-keyring.deb
+    if ! download https://packages.sury.org/debsuryorg-archive-keyring.deb /tmp/debsuryorg-archive-keyring.deb; then
+      console_log "Failed to download debsuryorg-archive-keyring.deb"
+      return 1
+    fi
+    if ! dpkg -i /tmp/debsuryorg-archive-keyring.deb; then
+      console_log "Failed to install debsuryorg-archive-keyring.deb"
+      return 1
+    fi
+  fi
+
+  keyring="$(find / -type f -name debsuryorg-archive-keyring.gpg -print -quit)"
+  if [[ -z "$keyring" ]]; then
+    console_log "Failed to find debsuryorg-archive-keyring.gpg"
+    return 1
+  fi
+  echo "deb [signed-by=$keyring] https://packages.sury.org/$pkg/ $LAMP_DISTRO_CODENAME main" >"/etc/apt/sources.list.d/$pkg.list"
+  return 0
 }
 
 function add_firewall_rule() {
@@ -67,6 +92,6 @@ done
 
 console_log "Checking and Full Upgrading system after including the new repositories"
 
-if apt update 2>&1 | grep -q "upgradable"; then
+if LC_MESSAGES=C apt update 2>&1 | grep -q "upgradable"; then
   apt -y full-upgrade
 fi
