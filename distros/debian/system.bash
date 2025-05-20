@@ -37,7 +37,6 @@ function apt_cache() {
 
 function debsuryorg_config() {
   local keyring pkg="$1"
-  rm -f /tmp/debsuryorg-archive-keyring.deb
   # Check download the debsuryorg-archive-keyring.deb package
   if [[ ! -f /tmp/debsuryorg-archive-keyring.deb || $(($(date +%s) - $(stat -c %Y /tmp/debsuryorg-archive-keyring.deb))) -gt 300 ]]; then
     rm -f /tmp/debsuryorg-archive-keyring.deb
