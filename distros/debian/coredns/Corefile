@@ -1,0 +1,13 @@
+# __VERSION__
+. {
+    template IN A __TLD__ {
+        match ^.*\.__TLD__\.$
+        answer "{{ .Name }} 60 IN A __LAMP_IP_ADDRESS__"
+        fallthrough
+    }
+    whoami
+    # __LAMP_DNS_FORWARDERS__
+    log
+    errors
+    cache
+}

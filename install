@@ -45,6 +45,24 @@ if [[ -z "$LAMP_DISTRO_ID" ]]; then
   exit 1
 fi
 
+LAMP_OS_ARCH=
+case "$(uname -m)" in
+x86_64 | amd64)
+  LAMP_OS_ARCH="amd64"
+  ;;
+i?86 | x86)
+  LAMP_OS_ARCH="386"
+  ;;
+aarch64 | arm64)
+  LAMP_OS_ARCH="arm64"
+  ;;
+esac
+
+if [[ -z "$LAMP_OS_ARCH" ]]; then
+  echo "Unsupported OS architecture"
+  exit 1
+fi
+
 LAMP_DISTRO_PATH="$LAMP_PATH/distros/$LAMP_DISTRO"
 
 if [[ -n "$LAMP_CONFIG_FQDN" ]]; then
@@ -122,8 +140,8 @@ LAMP_INCLUDE_NAMES=(
   phpmyadmin
   mailhog # Deprecated, only exits to remove it.
   mailpit
-  bind
-  # coredns
+  bind # Deprecated, only exits to remove it.
+  coredns
   bin
 )
 

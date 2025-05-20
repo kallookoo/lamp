@@ -20,9 +20,11 @@
 # Note: Only used if the TLD is not localhost
 # LAMP_CONFIG_IP_ADDRESS=""
 
-# Bind9 forwarders
+# dns forwarders
 # Note: By default is disabled it.
-# LAMP_CONFIG_BIND_FORWARDERS=()
+#       You can use LAMP_CONFIG_BIND_FORWARDERS but show a message.
+#       Because LAMP_CONFIG_BIND_FORWARDERS is deprecated.
+# LAMP_CONFIG_DNS_FORWARDERS=()
 
 # Default version of PHP
 # Note: By default is the system.

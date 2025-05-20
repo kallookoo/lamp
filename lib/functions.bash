@@ -102,3 +102,11 @@ function question() {
 function download() {
   curl --silent --location --fail --output "$2" "$1"
 }
+
+function fetch_github_api() {
+  if [[ -z "$LAMP_GITHUB_TOKEN" ]]; then
+    curl --silent --location --fail "$1"
+  else
+    curl --silent --location --fail --header "Authorization: Bearer $LAMP_GITHUB_TOKEN" "$1"
+  fi
+}
