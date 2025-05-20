@@ -1,6 +1,6 @@
 # (L)inux (A)pache (M)ariaDB (P)HP
 
-> [!IMPORTANT] 
+> [!IMPORTANT]
 > Currently in development, use it with care and at your own risk.
 
 ## Available distros
@@ -31,12 +31,15 @@
 * Copy `config/templates/config.inc.lamp.php` to `config/config.inc.lamp.php` and edit for customize the phpMyAdmin.
 * Copy `config/templates/php.ini` to `config/php.ini` and edit for customize the PHP versions.
 * Copy `config/templates/php.ini` to `config/phpPHP_VERSION.ini` and edit for customize the PHP version.
+
 > PHP_VERSION must be replaced by the version you want to customize.
 
 ## Installation
 
 Run the `./install` with root user or sudo.
 
+> [!NOTE]
+> During the installation, the GitHub API is used, so it is advisable to define the `LAMP_CONFIG_GITHUB_TOKEN` variable to avoid the rate limit.
 
 ## Commands
 
