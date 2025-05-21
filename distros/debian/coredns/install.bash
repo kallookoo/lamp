@@ -4,15 +4,18 @@
 
 if [[ "$LAMP_TLD" == "localhost" ]]; then
   apt_install libnss-myhostname
+elif [[ ! -f /etc/coredns/Corefile && -n "$(ss -Htuln sport = :53)" ]]; then
+  console_log "The port 53 is already in use, skipping the coredns installation."
 else
 
   systemctl stop coredns >/dev/null 2>&1
-  mkdir -p /var/lib/coredns /etc/coredns
-  if ! grep -q 'coredns' /etc/passwd; then
-    adduser --system --group coredns
+  mkdir -p /etc/coredns
+  if ! getent passwd coredns >/dev/null; then
+    adduser --system --disabled-password --disabled-login \
+      --home /var/lib/coredns --quiet --force-badname --group coredns
   fi
 
-  if [[ "${#LAMP_CONFIG_DNS_FORWARDERS[@]}" -eq 0 && ${#LAMP_CONFIG_BIND_FORWARDERS[@]} -gt 0 ]]; then
+  if [[ ${#LAMP_CONFIG_DNS_FORWARDERS[@]} -eq 0 && ${#LAMP_CONFIG_BIND_FORWARDERS[@]} -gt 0 ]]; then
     console_log "The LAMP_CONFIG_BIND_FORWARDERS option is deprecated, use LAMP_CONFIG_DNS_FORWARDERS instead."
     LAMP_CONFIG_DNS_FORWARDERS=("${LAMP_CONFIG_BIND_FORWARDERS[@]}")
   fi
@@ -38,12 +41,10 @@ else
       else
         console_log "Installing coredns"
       fi
-      if grep -q "$LAMP_COREDNS_VERSION" /etc/coredns/Corefile; then
+      if [ -f /etc/coredns/Corefile ] && grep -q "$LAMP_COREDNS_VERSION" /etc/coredns/Corefile; then
         console_log "Update only the coredns files, the version is already installed."
-        LAMP_COREDNS_INSTALL=false
-      fi
+      else
 
-      if [[ "$LAMP_COREDNS_INSTALL" == true ]]; then
         LAMP_COREDNS_DOWNLOAD="${LAMP_COREDNS_VERSION}/coredns_${LAMP_COREDNS_VERSION#v}_linux_${LAMP_OS_ARCH}.tgz"
         if ! download "https://github.com/coredns/coredns/releases/download/$LAMP_COREDNS_DOWNLOAD" /etc/coredns/coredns.tgz; then
           console_log "Failed to download coredns"
@@ -63,25 +64,27 @@ else
           "coredns-sysusers.conf|/usr/lib/sysusers.d"
           "coredns-tmpfiles.conf|/usr/lib/tmpfiles.d"
           "coredns.service|/lib/systemd/system"
+          "Corefile|/etc/coredns"
         )
 
         printf "%s\n" "${LAMP_COREDNS_SYSTEMD_FILES[@]}" |
           awk -F'|' -v base_dir="$LAMP_DISTRO_PATH/coredns" '{ name = $1; src = base_dir "/" name; dest = $2 "/" name; system("cp -f " src " " dest) }'
 
-        cp -f "$LAMP_DISTRO_PATH/coredns/Corefile" /etc/coredns/Corefile
-        sed -i "s/__VERSION__/$LAMP_COREDNS_VERSION/" /etc/coredns/Corefile
-        sed -i "s/__TLD__/$LAMP_TLD/" /etc/coredns/Corefile
-        sed -i "s/__LAMP_IP_ADDRESS__/$LAMP_IP_ADDRESS/" /etc/coredns/Corefile
+        sed -i "s/# __VERSION__/# $LAMP_COREDNS_VERSION/g" /etc/coredns/Corefile
+        sed -i "s/__TLD__/$LAMP_TLD/g" /etc/coredns/Corefile
+        sed -i "s/__LAMP_IP_ADDRESS__/$LAMP_IP_ADDRESS/g" /etc/coredns/Corefile
 
         if [[ ${#LAMP_CONFIG_DNS_FORWARDERS} -gt 0 ]]; then
-          LAMP_DNS_FORWARDERS=""
+          LAMP_DNS_FORWARDERS=()
           for LAMP_DNS_FORWARDER in "${LAMP_CONFIG_DNS_FORWARDERS[@]}"; do
-            if echo "$LAMP_DNS_FORWARDER" | grep -qP '^([0-9]{1,3}\.){3}([0-9]{1,3};?)$'; then
-              LAMP_DNS_FORWARDERS+="${LAMP_DNS_FORWARDER/;//} "
+            if [[ "$LAMP_DNS_FORWARDER" =~ ^(([0-9]{1,3}\.){3}([0-9]{1,3}))$ ]]; then
+              LAMP_DNS_FORWARDERS+=("${BASH_REMATCH[1]}")
+            else
+              console_log "The forwarder '$LAMP_DNS_FORWARDER' is not a valid IPv4 address."
             fi
           done
-          if [[ -n "$LAMP_DNS_FORWARDERS" ]]; then
-            sed -i "s/# __LAMP_DNS_FORWARDERS__/forward . $LAMP_DNS_FORWARDERS/" /etc/coredns/Corefile
+          if [[ "${#LAMP_DNS_FORWARDERS[@]}" -gt 0 ]]; then
+            sed -i "s/# __LAMP_DNS_FORWARDERS__/forward . ${LAMP_DNS_FORWARDERS[*]}/g" /etc/coredns/Corefile
           else
             console_log "The forwarders was not enabled as it did not have a correct format."
           fi
@@ -91,7 +94,6 @@ else
           echo "prepend domain-name-servers $LAMP_IP_ADDRESS;" >>/etc/dhcp/dhclient.conf
           systemctl restart networking
         fi
-        chown -R coredns:coredns /var/lib/coredns /etc/coredns
         systemctl daemon-reload
         systemctl enable coredns --now
         add_firewall_rule 53
