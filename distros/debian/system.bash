@@ -80,7 +80,8 @@ apt_install \
   ca-certificates \
   libnss3-tools \
   ghostscript \
-  dirmngr
+  dirmngr \
+  jq
 
 include "repositories"
 for package in "$LAMP_DISTRO_PATH/"*; do
