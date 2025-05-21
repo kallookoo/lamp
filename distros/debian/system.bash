@@ -38,7 +38,7 @@ function apt_cache() {
 function debsuryorg_config() {
   local keyring pkg="$1"
   # Check download the debsuryorg-archive-keyring.deb package
-  if [[ ! -f /tmp/debsuryorg-archive-keyring.deb || $(($(date +%s) - $(stat -c %Y /tmp/debsuryorg-archive-keyring.deb))) -gt 300 ]]; then
+  if [[ ! -f /tmp/debsuryorg-archive-keyring.deb || $(($(date +%s) - $(stat -c %Y /tmp/debsuryorg-archive-keyring.deb))) -gt 3600 ]]; then
     rm -f /tmp/debsuryorg-archive-keyring.deb
     if ! download https://packages.sury.org/debsuryorg-archive-keyring.deb /tmp/debsuryorg-archive-keyring.deb; then
       console_log "Failed to download debsuryorg-archive-keyring.deb"
