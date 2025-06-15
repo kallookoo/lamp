@@ -2,7 +2,7 @@
 # MailHog Uninstaller
 #
 
-console_log "As it is abandoned, any reference to it is eliminated."
+console_log "Remplaced by Mailpit, any reference to it is eliminated."
 if [[ -f /lib/systemd/system/mailhog.service ]]; then
   systemctl stop mailhog &>/dev/null
   rm -f /lib/systemd/system/mailhog.service
