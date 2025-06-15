@@ -2,6 +2,12 @@
 # MailPit Installer
 #
 
+if [[ -f /usr/local/bin/mailpit ]]; then
+  console_log "Upgrading MailPit binary"
+else
+  console_log "Installing MailPit binary"
+  mkdir -p /usr/local/bin
+fi
 mkdir -p /tmp/lamp-mailpit/bin
 systemctl stop mailpit >/dev/null 2>&1
 if download https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh "/tmp/lamp-mailpit/install.sh"; then
