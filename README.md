@@ -51,11 +51,14 @@ Run the `./install` with root user or sudo.
 
 ## Notes
 
-* The phpMyAdmin, Mailhog and mkcert if installed using the custom script to get the latest version.
-* The mkcert if installed in `/opt/mkcert` and the original mkcert binary if `/opt/mkcert/bin/current`.
-* The coredns only if installed when the TLD if not the localhost.
-* By default when if used the coredns the file `/etc/dhcp/dhclient.conf` is modified to add the ip in the nameservers.
 * The "User Defined" version is declared in the configuration file (It is usually the latest) or the one declared in your installation file.
 * The "Invalid" version means that it will be uninstalled for some reason.
+
 * Because MailHog is abandoned it is replaced by Mailpit.
-* The CoreDNS replace the bind9 for ease configuration and better performance.
+
+* The CoreDNS replace the bind9 for ease configuration and better performance and only if installed when the TLD if not the localhost.
+* By default when if used the coredns the file `/etc/dhcp/dhclient.conf` is modified to add the ip in the nameservers.
+
+* The phpMyAdmin, MailPit and mkcert if installed using the custom script to get the latest version.
+
+* The mkcert if installed in `/opt/mkcert` and the original mkcert binary if `/opt/mkcert/bin/current`.
