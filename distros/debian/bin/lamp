@@ -361,11 +361,11 @@ __lamp() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
     -D | --database)
+      cmd_args+=("-D")
       if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
-        database="$2"
+        cmd_args+=("$2")
         shift
       fi
-      cmd_args+=("-D" "${database:-$domain}")
       ;;
     -P | --php)
       if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
