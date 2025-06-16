@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 __lamp__help() {
   cat <<EOF
 Usage: lamp [command] [options]
@@ -136,7 +138,8 @@ __lamp__create() {
   local create_database=false
   local create_php=false
 
-  vhost="$(__lamp__add_domain_tld "$1")"
+  vhost="$1"
+  shift # Remove the domain from the arguments.
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -155,11 +158,11 @@ __lamp__create() {
       fi
       [ -n "$php_version" ] || php_version="__PHP_VERSION__"
       if ! [[ "$php_version" =~ ^[0-9]\.[0-9]$ ]]; then
-        LAMP_MESSAGES+=("Invalid PHP format version, changeing to __PHP_VERSION__.")
+        echo "Invalid PHP format version, changeing to __PHP_VERSION__."
         php_version="__PHP_VERSION__"
       fi
       if ! [[ -f "/etc/php/$php_version/fpm/pool.d/user.conf" ]]; then
-        LAMP_MESSAGES+=("Missing PHP-FPM pool for $php_version version, skipping.")
+        echo "Missing PHP-FPM pool for $php_version version, skipping."
         return
       fi
       ;;
@@ -168,33 +171,33 @@ __lamp__create() {
   done
 
   if ! __lamp__validate_domain "$vhost"; then
-    LAMP_MESSAGES+=("Invalid format for the $vhost domain.")
+    echo "Invalid format for the $vhost domain."
     return
   fi
 
   if [[ -f "/etc/apache2/sites-enabled/$vhost.conf" ]]; then
     rm -f "/etc/apache2/sites-enabled/$vhost.conf"
-    LAMP_MESSAGES+=("Updating the \"$vhost\" virtual host.")
+    echo "Updating the \"$vhost\" virtual host."
   else
-    LAMP_MESSAGES+=("Creating the \"$vhost\" virtual host.")
+    echo "Creating the \"$vhost\" virtual host."
   fi
 
   # Normalize the DocumentRoot.
   docroot="${docroot%/}/$vhost"
 
   if [[ ! -d "$docroot" ]]; then
-    LAMP_MESSAGES+=("Creating the directory (DocumentRoot).")
+    echo "Creating the directory (DocumentRoot)."
     if ! mkdir "$docroot"; then
-      LAMP_MESSAGES+=("Failed to create the directory (DocumentRoot), skipping.")
+      echo "Failed to create the directory (DocumentRoot), skipping."
       return
     fi
   fi
 
   domain="$(awk -F'.' 'END{print $(NF-1)"."$NF}' <<<"$vhost")"
 
-  LAMP_MESSAGES+=("$(mkcert create "$domain")")
+  mkcert create "$domain"
   if [[ ! -f "/opt/mkcert/certificates/$domain.pem" ]]; then
-    LAMP_MESSAGES+=("Missing $domain certificate, skipping.")
+    echo "Missing $domain certificate, skipping."
     return
   fi
 
@@ -202,8 +205,8 @@ __lamp__create() {
     if [[ -z "$database" ]]; then
       database="$(awk -F'.' 'END{print $(NF-1)}' <<<"$domain")"
     fi
-    LAMP_MESSAGES+=("Create the \"$database\" database if not exists.")
-    LAMP_MESSAGES+=("$(mariadb -e "CREATE DATABASE IF NOT EXISTS \`$database\`;" 2>&1 && echo "Executed without errors.")")
+    echo "Create the \"$database\" database if not exists."
+    mariadb -e "CREATE DATABASE IF NOT EXISTS \`$database\`;"
   fi
 
   cat <<EOF >"/etc/apache2/sites-available/$vhost.conf"
@@ -216,7 +219,7 @@ __lamp__create() {
 EOF
 
   if [[ "$vhost" != "$domain" ]]; then
-    LAMP_MESSAGES+=("$vhost is a subdomain of $domain, removing the ServerAlias.")
+    echo "$vhost is a subdomain of $domain, removing the ServerAlias."
     sed -i "/.*ServerAlias.*/d" "/etc/apache2/sites-available/$vhost.conf"
   fi
 
@@ -284,7 +287,7 @@ __lamp__delete() {
 }
 
 __lamp__validate_domain() {
-  [[ $# -gt 0 && "${#1}" -ge 1 && "${#1}" -le 254 && "$1" =~ ^[[:alnum:]]([[:alnum:]_\-]{1,61}[[:alnum:]])*\.[[:alpha:]]{2,}$ ]]
+  [[ $# -gt 0 && "${#1}" -ge 1 && "${#1}" -le 254 && "$1" =~ ^[[:alnum:]]([[:alnum:]_\-]{1,61})?[[:alnum:]]\.[[:alpha:]]{2,}$ ]]
 }
 
 __lamp__add_domain_tld() {
@@ -298,6 +301,7 @@ __lamp__add_domain_tld() {
 __lamp() {
   local cmd domain database
   local php_version="__PHP_VERSION__"
+  local cmd_args=()
 
   # Parse the first argument as the command.
   case "${1:-help}" in
@@ -361,14 +365,14 @@ __lamp() {
         database="$2"
         shift
       fi
-
+      cmd_args+=("-D" "${database:-$domain}")
       ;;
     -P | --php)
       if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
         php_version="$2"
         shift
       fi
-
+      cmd_args+=("-P" "$php_version")
       ;;
     *)
       echo "Unknown option. Use 'lamp help' for usage."
@@ -379,7 +383,7 @@ __lamp() {
   done
 
   # Update the arguments with default values if not set.
-  set -- "$domain" "${database:-$domain}" "${php_version}"
+  set -- "$domain" "${cmd_args[@]}"
 
   case "$cmd" in
   create) __lamp__create "$@" ;;
