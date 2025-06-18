@@ -8,11 +8,11 @@ Usage: lamp [command] [options]
 
 Commands:
   create <domain> <options>  Create a virtual host for domain.
-    -D, --database <database> Create a database. Default: <domain> without TLD.
-    -P, --php <version>       Enable PHP version. Default: __PHP_VERSION__
+    --database <database>    Create a database. Default: <domain> without TLD.
+    --php <version>          Enable PHP version. Default: __PHP_VERSION__
 
   delete <domain> <options>  Delete the virtual host for domain.
-    -D, --database <database> Delete the database. Default: <domain> without TLD.
+    --database <database>    Delete the database. Default: <domain> without TLD.
 
   enable  <domain>           Enable virtual host for domain.
   disable  <domain>          Disable virtual host for domain.
@@ -143,14 +143,14 @@ __lamp__create() {
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
-    -D | --database)
+    --database)
       create_database=true
       if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
         database="$2"
         shift
       fi
       ;;
-    -P | --php)
+    --php)
       create_php=true
       if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
         php_version="$2"
@@ -243,7 +243,7 @@ __lamp__delete() {
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
-    -D | --database)
+    --database)
       database="$vhost"
       if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
         database="$2"
@@ -360,22 +360,22 @@ __lamp() {
   # Parse and normalize the options.
   while [[ $# -gt 0 ]]; do
     case "$1" in
-    -D | --database)
-      cmd_args+=("-D")
+    --database)
+      cmd_args+=("$1")
       if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
         cmd_args+=("$2")
         shift
       fi
       ;;
-    -P | --php)
+    --php)
       if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
         php_version="$2"
         shift
       fi
-      cmd_args+=("-P" "$php_version")
+      cmd_args+=("--php" "$php_version")
       ;;
     *)
-      echo "Unknown option. Use 'lamp help' for usage."
+      echo "Unknown '$1' option. Use 'lamp help' for usage."
       exit 1
       ;;
     esac
