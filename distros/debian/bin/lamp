@@ -125,13 +125,6 @@ __lamp__disable() {
   __lamp__restart_server
 }
 
-__lamp__toggle_status() {
-  case "$1" in
-  enable) __lamp__enable "$2" ;;
-  disable) __lamp__disable "$2" ;;
-  esac
-}
-
 __lamp__create() {
   local vhost domain database php_version
   local docroot="__VIRTUALHOSTS_DIRECTORY__"
@@ -343,21 +336,17 @@ __lamp() {
       exit 1
     fi
 
+    # Normalize and validate the domain.
     domain="$(__lamp__add_domain_tld "$1")"
     if ! __lamp__validate_domain "$domain"; then
       echo "Invalid format for the domain: $domain"
       exit 1
     fi
-
-    if [[ "$cmd" =~ ^(enable|disable)$ ]]; then
-      __lamp__toggle_status "$cmd" "$domain"
-      exit 0
-    fi
-    shift # Remove the domain from the arguments.
+    shift # Remove the first argument (domain).
     ;;
   esac
 
-  # Parse and normalize the options.
+  # Parse and normalize the commands options.
   while [[ $# -gt 0 ]]; do
     case "$1" in
     --database)
@@ -382,10 +371,12 @@ __lamp() {
     shift
   done
 
-  # Update the arguments with default values if not set.
+  # Set the positional arguments for the command.
   set -- "$domain" "${cmd_args[@]}"
 
   case "$cmd" in
+  enable) __lamp__enable "$@" ;;
+  disable) __lamp__disable "$@" ;;
   create) __lamp__create "$@" ;;
   delete) __lamp__delete "$@" ;;
   esac
