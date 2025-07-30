@@ -13,9 +13,9 @@ query_cache_limit       = 1048576
 innodb_buffer_pool_size = 512M
 innodb_file_per_table   = 1
 character-set-server    = utf8mb4
-collation-server        = utf8mb4_unicode_520_ci
+collation-server        = utf8mb4_0900_ai_ci
 character_set_server    = utf8mb4
-collation_server        = utf8mb4_unicode_520_ci
+collation_server        = utf8mb4_0900_ai_ci
 expire_logs_days        = 0
 
 [mysqldump]
