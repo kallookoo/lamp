@@ -45,7 +45,7 @@ LAMP_PHP_PACKAGES_TEMPLATE=(
   "php__VERSION__-memcached"
   "php__VERSION__-msgpack"
   "php__VERSION__-mysql"
-  "php__VERSION__sqlite3"
+  "php__VERSION__-sqlite3"
   "php__VERSION__-soap"
   "php__VERSION__-xdebug"
   "php__VERSION__-xml"
