@@ -39,3 +39,11 @@ else
   console_log "Download failed"
 fi
 rm -rf "/tmp/lamp-mailpit"
+
+console_log "Creating the sendmail alias."
+if [[ ! -f /usr/sbin/sendmail ]]; then
+  ln -s /usr/local/bin/mailpit /usr/sbin/sendmail
+  console_log "Created the sendmail alias."
+elif [[ "$(readlink /usr/sbin/sendmail)" != "/usr/local/bin/mailpit" ]]; then
+  console_log "The sendmail alias is not created. It may not work properly."
+fi
