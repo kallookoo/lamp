@@ -90,7 +90,7 @@ else
           fi
         fi
         # Required for coredns to work in a OS.
-        if ! grep -q "$LAMP_IP_ADDRESS" /etc/dhcp/dhclient.conf; then
+        if [ -f /etc/dhcp/dhclient.conf ] && ! grep -q "$LAMP_IP_ADDRESS" /etc/dhcp/dhclient.conf; then
           echo "prepend domain-name-servers $LAMP_IP_ADDRESS;" >>/etc/dhcp/dhclient.conf
           systemctl restart networking
         fi
