@@ -36,26 +36,30 @@ function apt_cache() {
 }
 
 function debsuryorg_config() {
-  local keyring pkg="$1"
+  local pkg="$1"
+  local url="https://packages.sury.org"
+  local name="debsuryorg-archive-keyring.deb"
+  local keyring
+
   # Check download the debsuryorg-archive-keyring.deb package
-  if [[ ! -f /tmp/debsuryorg-archive-keyring.deb || $(($(date +%s) - $(stat -c %Y /tmp/debsuryorg-archive-keyring.deb))) -gt 3600 ]]; then
-    rm -f /tmp/debsuryorg-archive-keyring.deb
-    if ! download https://packages.sury.org/debsuryorg-archive-keyring.deb /tmp/debsuryorg-archive-keyring.deb; then
-      console_log "Failed to download debsuryorg-archive-keyring.deb"
+  if [[ ! -f "/tmp/$name" || $(($(date +%s) - $(stat -c %Y "/tmp/$name"))) -gt 3600 ]]; then
+    rm -f "/tmp/$name"
+    if ! download "$url/$name" "/tmp/$name"; then
+      console_log "Failed to download $name"
       return 1
     fi
-    if ! dpkg -i /tmp/debsuryorg-archive-keyring.deb; then
-      console_log "Failed to install debsuryorg-archive-keyring.deb"
+    if ! dpkg -i --skip-same-version "/tmp/$name" >/dev/null 2>&1; then
+      console_log "Failed to install $name"
       return 1
     fi
   fi
 
-  keyring="$(find / -type f -name debsuryorg-archive-keyring.gpg -print -quit)"
-  if [[ -z "$keyring" ]]; then
-    console_log "Failed to find debsuryorg-archive-keyring.gpg"
+  keyring="$(curl -sSL --fail "$url/$pkg/README.txt" 2>&1 | awk -F"=" '/signed-by/ {gsub(/\].+$/, "", $2); print $2}')"
+  if [[ -z "$keyring" || ! -f "$keyring" ]]; then
+    console_log "Failed to find ${name/.deb/.gpg}"
     return 1
   fi
-  echo "deb [signed-by=$keyring] https://packages.sury.org/$pkg/ $LAMP_DISTRO_CODENAME main" >"/etc/apt/sources.list.d/$pkg.list"
+  echo "deb [signed-by=$keyring] $url/$pkg/ $LAMP_DISTRO_CODENAME main" >"/etc/apt/sources.list.d/$pkg.list"
   return 0
 }
 
