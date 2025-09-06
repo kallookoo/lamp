@@ -111,7 +111,7 @@ mkdir -p /etc/ssl
 download https://curl.se/ca/cacert.pem /etc/ssl/cacert.pem &&
   find /etc/ssl/certs/ -name "*mkcert*" -exec cat {} \; >>/etc/ssl/cacert.pem
 
-TIME_ZONE="$(cat /etc/timezone)"
+TIME_ZONE="$(cat /etc/timezone 2>/dev/null || timedatectl show -P Timezone)"
 for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
   if [[ -d "/etc/php/$PHP_VERSION/fpm" ]]; then
     console_log "Generating configurations for version \"$PHP_VERSION\"."
