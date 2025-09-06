@@ -19,7 +19,8 @@ elif [[ "$1" =~ ^(create|delete|list|upgrade|version)$ ]]; then
   fi
 fi
 
-export CAROOT=/opt/mkcert/share
+# A custom location is permitted.
+export CAROOT="${CAROOT:-/opt/mkcert/share}"
 
 mkdir -p /opt/mkcert/certificates
 
