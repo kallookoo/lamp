@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #
 # Create the compressed backups for created databases
 #
@@ -27,16 +26,18 @@ if command -v mariadb >/dev/null 2>&1; then
   MYSQL_COMMAND="mariadb"
   MYSQLDUMP_COMMAND="mariadb-dump"
 fi
-MYSQL_EXCLUDE_DATABASES=(
-  information_schema
-  mysql
-  performance_schema
-  phpmyadmin
-  sys
-)
 
 for database in $($MYSQL_COMMAND -sNe 'show databases;'); do
-  if [[ "$(printf '%s\n' "${MYSQL_EXCLUDE_DATABASES[@]}" | grep -cx -- "$database")" -gt "1" ]]; then
-    $MYSQLDUMP_COMMAND --databases "$database" | gzip -k9 >"$MYSQL_DIRECTORY/$database.sql.gz"
-  fi
+  case "$database" in
+  mysql | performance_schema | phpmyadmin | sys | information_schema) ;;
+  *)
+    echo "Creating the $database backup"
+    # $MYSQLDUMP_COMMAND --databases --quick --single-transaction "$database" >"$MYSQL_DIRECTORY/$database.sql"
+    $MYSQLDUMP_COMMAND --databases --quick --single-transaction "$database" | gzip -k9 >"$MYSQL_DIRECTORY/$database.sql.gz"
+    ;;
+  esac
 done
+
+# echo "Creating the full backup"
+# $MYSQLDUMP_COMMAND --all-databases --quick --single-transaction >"$MYSQL_DIRECTORY/databases.sql"
+# $MYSQLDUMP_COMMAND --all-databases --quick --single-transaction | gzip -k9 >"$MYSQL_DIRECTORY/databases.sql.gz"
