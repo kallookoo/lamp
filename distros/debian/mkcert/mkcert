@@ -180,7 +180,8 @@ END {
         -cert-file "$pem" \
         -key-file "$key" \
         "$domain" "*.$domain" >/dev/null 2>&1 &&
-        cat "$key" "$pem" | tee "$pem" >/dev/null 2>&1 &&
+        cat "$pem" >>"$key" &&
+        mv "$key" "$pem" &&
         echo "Certificate generated for $domain." &&
         continue
       echo "No certificate generated for $domain."
