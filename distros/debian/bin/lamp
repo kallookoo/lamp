@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# set -x
-
 __lamp__help() {
   cat <<EOF
 Usage: lamp [command] [options]
