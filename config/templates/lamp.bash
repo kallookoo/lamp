@@ -43,7 +43,7 @@
 # Uninstall unspecified versions in LAMP_CONFIG_PHP_VERSIONS
 # Default value is no
 # Note: For security, only the packages used by the lamp are uninstalled.
-# LAM_CONFIG_PHP_UNINSTALL=""
+# LAMP_CONFIG_PHP_UNINSTALL=""
 
 # Directory to use for all domains ( virtualhosts )
 # LAMP_CONFIG_VIRTUALHOSTS_DIRECTORY=""

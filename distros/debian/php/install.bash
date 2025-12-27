@@ -90,7 +90,7 @@ for PHP_VERSION in "${LAMP_PHP_VERSIONS[@]}"; do
   done
 done
 
-if boolval "${LAM_CONFIG_PHP_UNINSTALL:-no}"; then
+if boolval "${LAMP_CONFIG_PHP_UNINSTALL:-no}"; then
   LAMP_PHP_UNINSTALL_PACKAGES=()
   for PHP_VERSION in "${LAMP_PHP_ALL_VERSIONS[@]}"; do
     for PHP_PACKAGE in "${LAMP_PHP_PACKAGES_TEMPLATE[@]}"; do
