@@ -83,6 +83,7 @@ __mkcert__install() {
       __mkcert create "$domain"
     done < <(find /opt/mkcert/certificates -name "*.pem" -exec basename -as '.pem' {} \;)
   fi
+  exit 0
 }
 
 __mkcert() {
