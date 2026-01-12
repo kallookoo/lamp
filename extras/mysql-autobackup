@@ -1,43 +1,125 @@
 #!/usr/bin/env bash
-#
-# Create the compressed backups for created databases
-#
 
-if [[ "$(id -u)" -ne "0" ]]; then
-  echo "Please, run this with the root user or sudo."
-  exit 1
-elif [[ -z "$1" ]]; then
-  echo "Undefined directory arguments"
-  echo "Usage: sudo ./mysql-autobackup directory"
-  exit 1
-elif ! command -v mariadb >/dev/null 2>&1 || ! command -v mysql >/dev/null 2>&1; then
-  echo "Missing MySQL command"
+if [ "$(id -u)" -ne 0 ]; then
+  echo "Error: This script must be run as root or with sudo."
   exit 1
 fi
 
-MYSQL_DIRECTORY="${1%*/}"
-if [[ ! -d "$MYSQL_DIRECTORY" ]]; then
-  mkdir -p "$MYSQL_DIRECTORY"
-fi
-
-MYSQL_COMMAND="mysql"
-MYSQLDUMP_COMMAND="mysqldump"
 if command -v mariadb >/dev/null 2>&1; then
   MYSQL_COMMAND="mariadb"
   MYSQLDUMP_COMMAND="mariadb-dump"
+elif command -v mysql >/dev/null 2>&1; then
+  MYSQL_COMMAND="mysql"
+  MYSQLDUMP_COMMAND="mysqldump"
+else
+  echo "Error: Neither MySQL nor MariaDB command found."
+  exit 1
 fi
 
-for database in $($MYSQL_COMMAND -sNe 'show databases;'); do
-  case "$database" in
-  mysql | performance_schema | phpmyadmin | sys | information_schema) ;;
-  *)
-    echo "Creating the $database backup"
-    # $MYSQLDUMP_COMMAND --databases --quick --single-transaction "$database" >"$MYSQL_DIRECTORY/$database.sql"
-    $MYSQLDUMP_COMMAND --databases --quick --single-transaction "$database" | gzip -k9 >"$MYSQL_DIRECTORY/$database.sql.gz"
+ALL_DATABASES=false
+INCLUDED_DATABASES=()
+EXCLUDED_DATABASES=()
+SYSTEM_DATABASES=(
+  "information_schema"
+  "mysql"
+  "performance_schema"
+  "phpmyadmin"
+  "sys"
+  "test"
+)
+
+in_array() {
+  [ $# -gt 1 ] && [ "$(printf '%s\n' "$@" | grep -cx -- "$1")" -gt "1" ]
+}
+
+usage() {
+  cat <<EOF
+Usage: sudo mysql-autobackup [options]
+Options:
+  -a, --all-databases         Back up all databases in one file
+                              Same as --all-databases option of mysqldump
+  -b, --database <name>       Back up only the specified database (repeatable)
+  -d, --directory <directory> Directory to store the backups (required)
+  -e, --exclude <name>        Exclude the specified database (repeatable)
+  -s, --system                Include the system defaults databases
+                              List of system databases:
+$(printf -- '                               - %s\n' "${SYSTEM_DATABASES[@]}")
+EOF
+  exit 1
+}
+
+get_all_databases() {
+  local database
+  local databases=()
+  for database in $($MYSQL_COMMAND -sNe 'show databases;'); do
+    if ! in_array "$database" "${EXCLUDED_DATABASES[@]}"; then
+      databases+=("$database")
+    fi
+  done
+  echo "${databases[@]}"
+}
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+  -a | --all-databases) ALL_DATABASES=true ;;
+  -b | --database)
+    if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
+      INCLUDED_DATABASES+=("$2")
+      shift
+    fi
+    ;;
+  -d | --directory)
+    if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
+      if [[ "$2" == "/" ]]; then
+        echo "Error: "
+      fi
+      BACKUP_DIRECTORY="${2%/}"
+      shift
+    fi
+    ;;
+  -e | --exclude)
+    if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
+      if ! in_array "$2" "${EXCLUDED_DATABASES[@]}"; then
+        EXCLUDED_DATABASES+=("$2")
+      fi
+      shift
+    fi
+    ;;
+  -s | --system)
+    for db in "${SYSTEM_DATABASES[@]}"; do
+      if ! in_array "$db" "${INCLUDED_DATABASES[@]}"; then
+        INCLUDED_DATABASES+=("$db")
+      fi
+    done
     ;;
   esac
+  shift
 done
 
-# echo "Creating the full backup"
-# $MYSQLDUMP_COMMAND --all-databases --quick --single-transaction >"$MYSQL_DIRECTORY/databases.sql"
-# $MYSQLDUMP_COMMAND --all-databases --quick --single-transaction | gzip -k9 >"$MYSQL_DIRECTORY/databases.sql.gz"
+if [[ -z "$BACKUP_DIRECTORY" ]]; then
+  echo "Error: Backup directory is required."
+  usage
+fi
+
+if [[ ! -d "$BACKUP_DIRECTORY" ]] && ! mkdir -p "$BACKUP_DIRECTORY"; then
+  echo "Error: Failed to create backup directory."
+  exit 1
+fi
+
+if ! command -v gzip >/dev/null 2>&1; then
+  echo "Error: 'gzip' command not found."
+  exit 1
+fi
+
+if [[ "$ALL_DATABASES" = true ]]; then
+  echo "Creating a backup of all databases"
+  $MYSQLDUMP_COMMAND --all-databases --quick --single-transaction | gzip -k9 >"$BACKUP_DIRECTORY/all-databases.sql.gz"
+  exit 0
+fi
+
+for database in $(get_all_databases); do
+  if in_array "$database" "${INCLUDED_DATABASES[@]}"; then
+    echo "Creating the $database backup"
+    $MYSQLDUMP_COMMAND --databases --quick --single-transaction "$database" | gzip -k9 >"$BACKUP_DIRECTORY/$database.sql.gz"
+  fi
+done
