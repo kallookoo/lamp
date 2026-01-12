@@ -96,7 +96,7 @@ __lamp__restart_server() {
 __lamp__enable() {
   local domain="$1"
   if [[ ! -f "/etc/apache2/sites-available/$domain.conf" ]]; then
-    echo "The \"$domain\" virtual host not exists."
+    echo "The \"$domain\" virtual host does not exist."
     return
   fi
   if [[ -f "/etc/apache2/sites-enabled/$domain.conf" ]]; then
@@ -111,7 +111,7 @@ __lamp__enable() {
 __lamp__disable() {
   local domain="$1"
   if [[ ! -f "/etc/apache2/sites-available/$domain.conf" ]]; then
-    echo "The \"$domain\" virtual host not exists."
+    echo "The \"$domain\" virtual host does not exist."
     return
   fi
   if [[ ! -f "/etc/apache2/sites-enabled/$domain.conf" ]]; then
@@ -149,7 +149,7 @@ __lamp__create() {
       fi
       [ -n "$php_version" ] || php_version="__PHP_VERSION__"
       if ! [[ "$php_version" =~ ^[0-9]\.[0-9]$ ]]; then
-        echo "Invalid PHP format version, changeing to __PHP_VERSION__."
+        echo "Invalid PHP format version, changing to __PHP_VERSION__."
         php_version="__PHP_VERSION__"
       fi
       if ! [[ -f "/etc/php/$php_version/fpm/pool.d/user.conf" ]]; then
@@ -160,11 +160,6 @@ __lamp__create() {
     esac
     shift
   done
-
-  if ! __lamp__validate_domain "$vhost"; then
-    echo "Invalid format for the $vhost domain."
-    return
-  fi
 
   if [[ -f "/etc/apache2/sites-enabled/$vhost.conf" ]]; then
     rm -f "/etc/apache2/sites-enabled/$vhost.conf"
@@ -246,7 +241,7 @@ __lamp__delete() {
   done
 
   if [[ ! -f "/etc/apache2/sites-available/$vhost.conf" ]]; then
-    echo "The virtual host not exists, skipping."
+    echo "The virtual host does not exist, skipping."
     return
   fi
 
@@ -266,7 +261,7 @@ __lamp__delete() {
       database="$(awk -F'.' 'END{print $(NF-1)}' <<<"$vhost")"
     fi
     echo "Deleting the \"$database\" database if exists."
-    mariadb -e "DROP DATABASE IF NOT EXISTS \`$database\`;" 2>&1 && echo "Executed without errors."
+    mariadb -e "DROP DATABASE IF EXISTS \`$database\`;" 2>&1 && echo "Executed without errors."
   fi
 
   echo "The virtual host configuration files were deleted."
@@ -278,7 +273,7 @@ __lamp__delete() {
 }
 
 __lamp__validate_domain() {
-  [[ $# -gt 0 && "${#1}" -ge 1 && "${#1}" -le 254 && "$1" =~ ^[[:alnum:]]([[:alnum:]_\-]{1,61})?[[:alnum:]]\.[[:alpha:]]{2,}$ ]]
+  [[ $# -gt 0 && "${#1}" -ge 1 && "${#1}" -le 254 && "$1" =~ ^[[:alnum:]]([[:alnum:]\-]{0,62}[[:alnum:]]\.)?[[:alnum:]\-]{0,62}[[:alnum:]]\.[[:alpha:]]{2,}$ ]]
 }
 
 __lamp__add_domain_tld() {
