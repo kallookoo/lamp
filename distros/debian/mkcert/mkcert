@@ -50,7 +50,7 @@ __mkcert__install() {
 
   case "$action" in
   install) echo "Installing the binary." ;;
-  update) echo "Updating the binary." ;;
+  upgrade) echo "Upgrading the binary." ;;
   esac
 
   if ! wget -q "https://dl.filippo.io/mkcert/latest?for=linux/$arch" -O /opt/mkcert/bin/latest; then
