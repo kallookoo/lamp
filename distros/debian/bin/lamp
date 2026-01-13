@@ -195,30 +195,34 @@ __lamp__create() {
     mariadb -e "CREATE DATABASE IF NOT EXISTS \`$database\`;"
   fi
 
-  cat <<EOF >"/etc/apache2/sites-available/$vhost.conf"
-  <VirtualHost *:443>
-    ServerName $vhost
-    ServerAlias *.$vhost
-    ServerAdmin "webmaster@$domain"
-    DocumentRoot "$docroot"
-    SSLCertificateFile "/opt/mkcert/certificates/$domain.pem"
-EOF
-
   if [[ "$vhost" != "$domain" ]]; then
-    echo "$vhost is a subdomain of $domain, removing the ServerAlias."
-    sed -i "/.*ServerAlias.*/d" "/etc/apache2/sites-available/$vhost.conf"
+    echo "$vhost is a subdomain of $domain, skipping ServerAlias."
   fi
 
-  if [[ $create_php == true && "$php_version" != "__PHP_VERSION__" ]]; then
-    cat <<EOF >>"/etc/apache2/sites-available/$vhost.conf"
-    <Directory $docroot/>
-      <FilesMatch ".+\.ph(ar|p|tml)$">
-        SetHandler "proxy:unix:/run/php/php$php_version-fpm-user.sock|fcgi://localhost"
-      </FilesMatch>
-    </Directory>
-EOF
+  {
+    echo "<VirtualHost *:443>"
+    echo "    ServerName $vhost"
+    if [[ "$vhost" == "$domain" ]]; then
+      echo "    ServerAlias *.$vhost"
+    fi
+    echo "    ServerAdmin webmaster@$domain"
+    echo "    DocumentRoot $docroot"
+    echo "    SSLCertificateFile /opt/mkcert/certificates/$domain.pem"
+    if [[ $create_php == true && "$php_version" != "__PHP_VERSION__" ]]; then
+      echo "    <Directory $docroot/>"
+      echo "      <FilesMatch \".+\.ph(ar|p|tml)$\">"
+      echo "        SetHandler \"proxy:unix:/run/php/$php_version-fpm-user.sock|fcgi://localhost\""
+      echo "      </FilesMatch>"
+      echo "    </Directory>"
+    fi
+    echo "</VirtualHost>"
+  } >"/etc/apache2/sites-available/$vhost.conf"
+
+  if [[ ! -f "/etc/apache2/sites-available/$vhost.conf" ]]; then
+    echo "Failed to create the virtual host configuration."
+    return 1
   fi
-  echo "</VirtualHost>" >>"/etc/apache2/sites-available/$vhost.conf"
+
   __lamp__enable "$vhost"
 }
 
