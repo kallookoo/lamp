@@ -5,25 +5,25 @@ __lamp__help() {
 Usage: lamp [command] [options]
 
 Commands:
-  create <domain> <options>  Create a virtual host for domain.
-    --database <database>    Create a database. Default: <domain> without TLD.
-    --php <version>          Enable PHP version. Default: __PHP_VERSION__
+  create <name>             Create a virtual host.
+    --database [name]       Create a database (default: <name>)
+    --php <version>         Specify the PHP version (default: __PHP_VERSION__)
 
-  delete <domain> <options>  Delete the virtual host for domain.
-    --database <database>    Delete the database. Default: <domain> without TLD.
+  delete <name>             Delete the virtual host.
+    --database [name]       Delete the database (default: <name>)
 
-  enable  <domain>           Enable virtual host for domain.
-  disable  <domain>          Disable virtual host for domain.
+  enable <name>             Enable virtual host.
+  disable <name>            Disable virtual host.
 
-  list                       List the generated virtual hosts.
+  list                      List the generated virtual hosts.
 
-  restart <services>         Restart all services or service if defined.
-                             The 'php' o 'php-fpm' name restarts all PHP-FPM versions.
-                             Use the 'phpX.X-fpm' to restart a specific version
-                             where X.X is a valid version.
-                             Default: php apache2 mariadb mailpit coredns
+  restart [services]        Restart all services or the specified service.
+                            Use 'php' or 'php-fpm' to restart all PHP-FPM.
 
-  help                       Show this help message.
+  help                      Show this help message.
+
+Note:
+  - The <name> argument becomes the <name>.__TLD__ domain and vhost (folder).
 EOF
   exit 0
 }
@@ -90,76 +90,57 @@ __lamp__restart() {
 __lamp__restart_server() {
   if ! __lamp__restart "php" "apache2" >/dev/null 2>&1; then
     echo "Failed to restart the server services, check the logs."
+    return 1
   fi
+  return 0
 }
 
 __lamp__enable() {
   local domain="$1"
   if [[ ! -f "/etc/apache2/sites-available/$domain.conf" ]]; then
     echo "The \"$domain\" virtual host does not exist."
-    return
+    return 1
   fi
   if [[ -f "/etc/apache2/sites-enabled/$domain.conf" ]]; then
     echo "The \"$domain\" virtual host is already enabled."
-    return
+    return 0
   fi
   ln -s "/etc/apache2/sites-available/$domain.conf" "/etc/apache2/sites-enabled/$domain.conf"
   echo "The \"$domain\" virtual host is enabled."
   __lamp__restart_server
+  return $?
 }
 
 __lamp__disable() {
   local domain="$1"
   if [[ ! -f "/etc/apache2/sites-available/$domain.conf" ]]; then
     echo "The \"$domain\" virtual host does not exist."
-    return
+    return 1
   fi
   if [[ ! -f "/etc/apache2/sites-enabled/$domain.conf" ]]; then
     echo "The \"$domain\" virtual host is not enabled."
-    return
+    return 0
   fi
   rm -f "/etc/apache2/sites-enabled/$domain.conf"
   echo "The \"$domain\" virtual host is disabled."
   __lamp__restart_server
+  return $?
 }
 
 __lamp__create() {
-  local vhost domain database php_version
+  local vhost="$1" domain="$2" database="$3" php_version="$4"
   local docroot="__VIRTUALHOSTS_DIRECTORY__"
-  local create_database=false
-  local create_php=false
 
-  vhost="$1"
-  shift # Remove the domain from the arguments.
-
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-    --database)
-      create_database=true
-      if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
-        database="$2"
-        shift
-      fi
-      ;;
-    --php)
-      create_php=true
-      if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
-        php_version="$2"
-        shift
-      fi
-      [ -n "$php_version" ] || php_version="__PHP_VERSION__"
-      if ! [[ "$php_version" =~ ^[0-9]\.[0-9]$ ]]; then
-        echo "Invalid PHP format version, changing to __PHP_VERSION__."
-        php_version="__PHP_VERSION__"
-      fi
-      if ! [[ -f "/etc/php/$php_version/fpm/pool.d/user.conf" ]]; then
-        echo "Missing PHP-FPM pool for $php_version version, skipping."
-        return
-      fi
-      ;;
-    esac
-    shift
-  done
+  if [[ -n "$php_version" ]]; then
+    if ! [[ "$php_version" =~ ^[0-9]\.[0-9]$ ]]; then
+      echo "Invalid PHP format version, changing to __PHP_VERSION__."
+      php_version="__PHP_VERSION__"
+    fi
+    if ! [[ -f "/etc/php/$php_version/fpm/pool.d/user.conf" ]]; then
+      echo "Missing PHP-FPM pool for $php_version version, skipping."
+      return 1
+    fi
+  fi
 
   if [[ -f "/etc/apache2/sites-enabled/$vhost.conf" ]]; then
     rm -f "/etc/apache2/sites-enabled/$vhost.conf"
@@ -168,31 +149,25 @@ __lamp__create() {
     echo "Creating the \"$vhost\" virtual host."
   fi
 
-  # Normalize the DocumentRoot.
   docroot="${docroot%/}/$vhost"
 
   if [[ ! -d "$docroot" ]]; then
     echo "Creating the directory (DocumentRoot)."
     if ! mkdir "$docroot"; then
       echo "Failed to create the directory (DocumentRoot), skipping."
-      return
+      return 1
     fi
   fi
-
-  domain="$(awk -F'.' 'END{print $(NF-1)"."$NF}' <<<"$vhost")"
 
   mkcert create "$domain"
   if [[ ! -f "/opt/mkcert/certificates/$domain.pem" ]]; then
     echo "Missing $domain certificate, skipping."
-    return
+    return 1
   fi
 
-  if [[ $create_database == true ]]; then
-    if [[ -z "$database" ]]; then
-      database="$(awk -F'.' 'END{print $(NF-1)}' <<<"$domain")"
-    fi
+  if [[ -n "$database" ]]; then
     echo "Create the \"$database\" database if not exists."
-    mariadb -e "CREATE DATABASE IF NOT EXISTS \`$database\`;"
+    mariadb -e "CREATE DATABASE IF NOT EXISTS \`$database\`;" || :
   fi
 
   if [[ "$vhost" != "$domain" ]]; then
@@ -201,19 +176,19 @@ __lamp__create() {
 
   {
     echo "<VirtualHost *:443>"
-    echo "    ServerName $vhost"
+    echo "  ServerName $vhost"
     if [[ "$vhost" == "$domain" ]]; then
-      echo "    ServerAlias *.$vhost"
+      echo "  ServerAlias *.$vhost"
     fi
-    echo "    ServerAdmin webmaster@$domain"
-    echo "    DocumentRoot $docroot"
-    echo "    SSLCertificateFile /opt/mkcert/certificates/$domain.pem"
-    if [[ $create_php == true && "$php_version" != "__PHP_VERSION__" ]]; then
-      echo "    <Directory $docroot/>"
-      echo "      <FilesMatch \".+\.ph(ar|p|tml)$\">"
-      echo "        SetHandler \"proxy:unix:/run/php/$php_version-fpm-user.sock|fcgi://localhost\""
-      echo "      </FilesMatch>"
-      echo "    </Directory>"
+    echo "  ServerAdmin webmaster@$domain"
+    echo "  DocumentRoot $docroot"
+    echo "  SSLCertificateFile /opt/mkcert/certificates/$domain.pem"
+    if [[ -n "$php_version" && "$php_version" != "__PHP_VERSION__" ]]; then
+      echo "  <Directory $docroot/>"
+      echo "    <FilesMatch \".+\.ph(ar|p|tml)$\">"
+      echo "      SetHandler \"proxy:unix:/run/php/$php_version-fpm-user.sock|fcgi://localhost\""
+      echo "    </FilesMatch>"
+      echo "  </Directory>"
     fi
     echo "</VirtualHost>"
   } >"/etc/apache2/sites-available/$vhost.conf"
@@ -224,60 +199,41 @@ __lamp__create() {
   fi
 
   __lamp__enable "$vhost"
+  return $?
 }
 
 __lamp__delete() {
-  local vhost domain database php_version
-
-  vhost="$(__lamp__add_domain_tld "$1")"
-
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-    --database)
-      database="$vhost"
-      if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
-        database="$2"
-        shift
-      fi
-      ;;
-    esac
-    shift
-  done
+  local vhost="$1" domain="$2" database="$3"
 
   if [[ ! -f "/etc/apache2/sites-available/$vhost.conf" ]]; then
     echo "The virtual host does not exist, skipping."
-    return
+    return 1
   fi
-
-  domain="$(awk -F'.' 'END{print $(NF-1)"."$NF}' <<<"$vhost")"
 
   rm -f "/etc/apache2/sites-enabled/$vhost.conf"
   rm -f "/etc/apache2/sites-available/$vhost.conf"
 
-  if [[ "$domain" == "$vhost" ]]; then
+  if [[ "$vhost" == "$domain" ]]; then
     mkcert delete "$domain"
   elif [[ -f "/etc/apache2/sites-available/$domain.conf" ]]; then
     echo "Skipping the certificate deletion because the $vhost is a subdomain of $domain."
   fi
 
   if [[ -n "$database" ]]; then
-    if [[ "$database" == "$vhost" ]]; then
-      database="$(awk -F'.' 'END{print $(NF-1)}' <<<"$vhost")"
-    fi
     echo "Deleting the \"$database\" database if exists."
     mariadb -e "DROP DATABASE IF EXISTS \`$database\`;" 2>&1 && echo "Executed without errors."
+  else
+    echo "The database name was not defined, skipping the database deletion."
   fi
 
   echo "The virtual host configuration files were deleted."
-  if [[ -z "$database" ]]; then
-    echo "The database name was not defined, skipping the database deletion."
-  fi
   echo "To avoid data loss, the domain directory is not deleted."
   __lamp__restart_server
+  return $?
 }
 
 __lamp__validate_domain() {
-  [[ $# -gt 0 && "${#1}" -ge 1 && "${#1}" -le 254 && "$1" =~ ^[[:alnum:]]([[:alnum:]\-]{0,62}[[:alnum:]]\.)?[[:alnum:]\-]{0,62}[[:alnum:]]\.[[:alpha:]]{2,}$ ]]
+  [[ $# -gt 0 && "$1" =~ ^[[:alnum:]]([[:alnum:]\-]{0,62}[[:alnum:]]\.)?[[:alnum:]\-]{0,62}[[:alnum:]]\.[[:alpha:]]{2,}$ ]]
 }
 
 __lamp__add_domain_tld() {
@@ -289,11 +245,8 @@ __lamp__add_domain_tld() {
 }
 
 __lamp() {
-  local cmd domain database
-  local php_version="__PHP_VERSION__"
-  local cmd_args=()
+  local cmd
 
-  # Parse the first argument as the command.
   case "${1:-help}" in
   create | delete | enable | disable | restart)
     cmd="$1"
@@ -305,52 +258,70 @@ __lamp() {
 
   if [[ -z "$cmd" ]]; then
     echo "Unknown command. Use 'lamp help' for usage."
-    exit 1
+    return 2
   fi
 
-  # Check and execute with sudo if not running with root privileges.
   if [[ "$(id -u)" -ne "0" ]]; then
     exec sudo lamp "$cmd" "$@"
   fi
 
-  case "$cmd" in
-  restart)
-    # If no arguments are provided, set the default services.
+  if [[ "$cmd" == "restart" ]]; then
+
     if [[ $# -eq 0 ]]; then
       set -- "php" "apache2" "mariadb" "mailpit" "coredns"
     fi
     __lamp__restart "$@"
-    exit 0
+    return $?
+  fi
+
+  if [[ $# -eq 0 ]]; then
+    echo "No domain defined for the $cmd command."
+    return 2
+  fi
+
+  if [[ "$1" =~ ^- ]]; then
+    echo "Arguments are positional, the domain must be the first argument."
+    return 2
+  fi
+
+  local vhost
+  vhost="$(__lamp__add_domain_tld "$1")"
+  if ! __lamp__validate_domain "$vhost"; then
+    echo "Invalid format for the domain: $vhost"
+    return 2
+  fi
+
+  case "$cmd" in
+  enable)
+    __lamp__enable "$vhost"
+    return $?
+    ;;
+  disable)
+    __lamp__disable "$vhost"
+    return $?
     ;;
   *)
-    if [[ $# -eq 0 ]]; then
-      echo "No domain defined for the $cmd command."
-      exit 1
-    fi
-
-    if [[ "$1" =~ ^- ]]; then
-      echo "Arguments are positional, the domain must be the first argument."
-      exit 1
-    fi
-
-    # Normalize and validate the domain.
-    domain="$(__lamp__add_domain_tld "$1")"
-    if ! __lamp__validate_domain "$domain"; then
-      echo "Invalid format for the domain: $domain"
-      exit 1
-    fi
-    shift # Remove the first argument (domain).
+    shift # Remove the first argument (vhost).
     ;;
   esac
 
-  # Parse and normalize the commands options.
+  local domain
+  local database
+  local php_version="__PHP_VERSION__"
+
+  domain="$(awk -F'.' 'END{print $(NF-1)"."$NF}' <<<"$vhost")"
+
   while [[ $# -gt 0 ]]; do
     case "$1" in
     --database)
-      cmd_args+=("$1")
       if [[ -n "$2" ]] && ! [[ "$2" =~ ^- ]]; then
-        cmd_args+=("$2")
+        database="$2"
         shift
+      elif [[ "$vhost" == "$domain" ]]; then
+        database="$(awk -F'.' 'END{print $(NF-1)}' <<<"$vhost")"
+      else
+        echo "Subdomain detected. Use '--database <name>' to specify a database."
+        return 2
       fi
       ;;
     --php)
@@ -358,25 +329,27 @@ __lamp() {
         php_version="$2"
         shift
       fi
-      cmd_args+=("--php" "$php_version")
       ;;
     *)
       echo "Unknown '$1' option. Use 'lamp help' for usage."
-      exit 1
+      return 2
       ;;
     esac
     shift
   done
 
-  # Set the positional arguments for the command.
-  set -- "$domain" "${cmd_args[@]}"
-
   case "$cmd" in
-  enable) __lamp__enable "$@" ;;
-  disable) __lamp__disable "$@" ;;
-  create) __lamp__create "$@" ;;
-  delete) __lamp__delete "$@" ;;
+  create)
+    __lamp__create "$vhost" "$domain" "$database" "$php_version"
+    return $?
+    ;;
+  delete)
+    __lamp__delete "$vhost" "$domain" "$database"
+    return $?
+    ;;
   esac
+  return 0
 }
 
 __lamp "$@"
+exit $?
