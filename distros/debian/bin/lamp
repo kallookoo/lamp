@@ -212,11 +212,10 @@ __lamp__delete() {
 
   rm -f "/etc/apache2/sites-enabled/$vhost.conf"
   rm -f "/etc/apache2/sites-available/$vhost.conf"
-
-  if [[ "$vhost" == "$domain" ]]; then
-    mkcert delete "$domain"
-  elif [[ -f "/etc/apache2/sites-available/$domain.conf" ]]; then
+  if [[ -f "/etc/apache2/sites-available/$domain.conf" ]]; then
     echo "Skipping the certificate deletion because the $vhost is a subdomain of $domain."
+  else
+    mkcert delete "$domain"
   fi
 
   if [[ -n "$database" ]]; then
