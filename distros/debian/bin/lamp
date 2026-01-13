@@ -262,7 +262,12 @@ __lamp() {
   fi
 
   if [[ "$(id -u)" -ne "0" ]]; then
-    exec sudo lamp "$cmd" "$@"
+    if command -v sudo >/dev/null 2>&1; then
+      echo "Not running as root, auto-executing with sudo"
+      exec sudo lamp "$cmd" "$@"
+    fi
+    echo "The sudo command not found. Please run this script as root."
+    return 1
   fi
 
   if [[ "$cmd" == "restart" ]]; then
