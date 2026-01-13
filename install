@@ -50,9 +50,6 @@ case "$(uname -m)" in
 x86_64 | amd64)
   LAMP_OS_ARCH="amd64"
   ;;
-i?86 | x86)
-  LAMP_OS_ARCH="386"
-  ;;
 aarch64 | arm64)
   LAMP_OS_ARCH="arm64"
   ;;
@@ -71,31 +68,28 @@ else
   LAMP_FQDN="$(hostname -f)"
 fi
 
-make_array LAMP_FQDN_EXPANDED "${LAMP_FQDN/./ }"
+make_array LAMP_FQDN_EXPANDED "${LAMP_FQDN//./ }"
 
 if [[ ${#LAMP_FQDN_EXPANDED[@]} -lt 2 ]]; then
-  console_log "Invalid FQDN, declare the LAMP_CONFIG_FQDN option with the valid domain or configure the valid FQDN in the OS."
+  console_log "Invalid FQDN format. Expected 'hostname.tld'."
+  console_log "Set LAMP_CONFIG_FQDN or configure a valid system FQDN."
   exit 1
 fi
 
 if [[ ${#LAMP_FQDN_EXPANDED[@]} -gt 2 ]]; then
-  console_log "The FQDN is a subdomain and you are not allowed to use it."
-  console_log "It will be subtracted to continue with the installation."
-  LAMP_FQDN="$(echo "${LAMP_FQDN_EXPANDED[@]}" | awk '{print $(NF-1),$NF}' | tr ' ' '.')"
-  console_log "Now the FQDN for lamp is: $LAMP_FQDN"
+  console_log "The FQDN '$LAMP_FQDN' is a subdomain."
+  console_log "Only 'hostname.tld' format is supported, truncating."
+  LAMP_FQDN="$(echo "${LAMP_FQDN_EXPANDED[@]}" | awk '{print $(NF-1)"."$NF}')"
 fi
 
 LAMP_TLD="$(echo "$LAMP_FQDN" | awk -F'.' '{print $NF}')"
-if [[ -n "$LAMP_CONFIG_FQDN" ]]; then
-  console_log "The FQDN for lamp is: $LAMP_FQDN"
-elif [[ -n "${LAMP_CONFIG_TLD:-}" ]] && [[ "$LAMP_TLD" != "$LAMP_CONFIG_TLD" ]]; then
-  console_log "The LAMP_CONFIG_TLD and the current TLD they do not match, the one defined in the LAM_CONFIG_TLD option will be used"
+if [[ -n "$LAMP_CONFIG_TLD" && "$LAMP_TLD" != "$LAMP_CONFIG_TLD" ]]; then
+  console_log "Applying configured TLD '$LAMP_CONFIG_TLD' instead of '$LAMP_TLD'."
   LAMP_TLD="$LAMP_CONFIG_TLD"
-  LAMP_FQDN="$(echo "$LAMP_FQDN" | awk -F'.' '{print $1}').$LAMP_TLD"
-  console_log "The FQDN for lamp is: $LAMP_FQDN"
-else
-  console_log "The FQDN for lamp is: $LAMP_FQDN"
+  LAMP_FQDN="${LAMP_FQDN%.*}.$LAMP_TLD"
 fi
+
+console_log "The FQDN for lamp is: $LAMP_FQDN"
 
 if [[ "$LAMP_TLD" == "localhost" ]]; then
   console_log "The IP for lamp is: 127.0.0.1"
