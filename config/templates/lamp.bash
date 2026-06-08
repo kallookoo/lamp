@@ -86,3 +86,7 @@
 # When no if defined the script aks for this.
 # Default value is: no
 # LAMP_CONFIG_AUTO_UNINSTALL=""
+
+# Define the github token to resolve the rate limit issue
+# Note: This token ONLY is used when using the GitHub API.
+# LAMP_CONFIG_GITHUB_TOKEN=""
