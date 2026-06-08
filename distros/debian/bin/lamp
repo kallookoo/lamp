@@ -15,7 +15,8 @@ Commands:
   enable <name>             Enable virtual host.
   disable <name>            Disable virtual host.
 
-  list                      List the generated virtual hosts.
+  list                      List the generated virtual hosts
+    --filter <status>        Filter by status: enabled, disabled
 
   restart [services]        Restart all services or the specified service.
                             Use 'php' or 'php-fpm' to restart all PHP-FPM.
@@ -29,34 +30,54 @@ EOF
 }
 
 __lamp__list() {
+  local filter="none"
+  if [[ -n "$1" ]]; then
+    if [[ "$1" != "--filter" ]]; then
+      echo "Unknown option."
+      exit 2
+    fi
+    if ! [[ "${2:-}" =~ ^(enabled|disabled)$ ]]; then
+      echo "Invalid filter value."
+      exit 2
+    fi
+    filter="$2"
+  fi
+
   find /etc/apache2/sites-available -maxdepth 1 -name "*.conf" 2>/dev/null |
-    awk -F'/' '
-    BEGIN { nlen = 30 }
+    awk -F'/' -v filter="$filter" '
+    BEGIN { nlen = 6; count = 0 }
     {
       conf = $NF
-      status = "DISABLED"
+      status = "disabled"
       if (system("test -f /etc/apache2/sites-enabled/" conf) == 0) {
-        status = "ENABLED"
+        status = "enabled"
       }
+      if (filter == "none" || filter == status) {
+        count++
       vhost = substr(conf, 1, length(conf) - 5)
       len = length(vhost)
       if (len > nlen) {
         nlen = len
       }
-      vhosts[NR] = vhost
-      statuses[NR] = status
+        vhosts[count] = vhost
+        statuses[count] = status
+      }
     }
     END {
-    if (NR == 0) {
+    if (count == 0) {
       print "No domain found."
       exit 1
     }
-    if (nlen >= 30) {
       nlen += 2
-    }
+    if (filter == "none") {
     printf "%-*s %s\n", nlen, "DOMAIN", "STATUS"
-    for (i=1; i<=NR; i++) {
+      for (i=1; i<=count; i++) {
       printf "%-*s %s\n", nlen, vhosts[i], statuses[i]
+      }
+    } else {
+      for (i=1; i<=count; i++) {
+        print vhosts[i]
+      }
     }
   }'
   exit 0
@@ -251,7 +272,10 @@ __lamp() {
     cmd="$1"
     shift
     ;;
-  list) __lamp__list ;;
+  list)
+    shift
+    __lamp__list "$@"
+    ;;
   help) __lamp__help ;;
   esac
 
