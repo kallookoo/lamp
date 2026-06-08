@@ -64,7 +64,7 @@
 
 # MariaDB version
 # See available version in https://mariadb.org
-# Default value is 11 ( Used the Rolling )
+# Default value is 12 ( Used the Rolling )
 # Note: To disable the rolling version, set to exact version. (e.g. 11.4)
 # LAMP_CONFIG_MARIADB_VERSION=""
 
