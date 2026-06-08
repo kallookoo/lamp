@@ -9,8 +9,9 @@ Commands:
     --database [name]       Create a database (default: <name>)
     --php <version>         Specify the PHP version (default: __PHP_VERSION__)
 
-  delete <name>             Delete the virtual host.
-    --database [name]       Delete the database (default: <name>)
+  delete <name>             Delete the virtual host
+                            To avoid data loss, the directory is not deleted
+    --database [name]        Delete the database (default: <name>)
 
   enable <name>             Enable virtual host.
   disable <name>            Disable virtual host.
@@ -24,7 +25,7 @@ Commands:
   help                      Show this help message.
 
 Note:
-  - The <name> argument becomes the <name>.__TLD__ domain and vhost (folder).
+  - The <name> argument becomes the <name>.__TLD__ domain and vhost (folder)
 EOF
   exit 0
 }
@@ -247,7 +248,6 @@ __lamp__delete() {
   fi
 
   echo "The virtual host configuration files were deleted."
-  echo "To avoid data loss, the domain directory is not deleted."
   __lamp__restart_server
   return $?
 }
