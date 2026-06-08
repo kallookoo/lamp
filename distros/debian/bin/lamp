@@ -5,24 +5,24 @@ __lamp__help() {
 Usage: lamp [command] [options]
 
 Commands:
-  create <name>             Create a virtual host.
-    --database [name]       Create a database (default: <name>)
-    --php <version>         Specify the PHP version (default: __PHP_VERSION__)
+  create <name>             Create a virtual host
+    --database [name]        Create a database (default: <name>)
+    --php <version>          Specify the PHP version (default: __PHP_VERSION__)
 
   delete <name>             Delete the virtual host
                             To avoid data loss, the directory is not deleted
     --database [name]        Delete the database (default: <name>)
 
-  enable <name>             Enable virtual host.
-  disable <name>            Disable virtual host.
+  enable <name>             Enable virtual host
+  disable <name>            Disable virtual host
 
   list                      List the generated virtual hosts
     --filter <status>        Filter by status: enabled, disabled
 
-  restart [services]        Restart all services or the specified service.
-                            Use 'php' or 'php-fpm' to restart all PHP-FPM.
+  restart [services]        Restart all services or the specified service
+                            Use 'php' or 'php-fpm' to restart all PHP-FPM
 
-  help                      Show this help message.
+  help                      Show this help message
 
 Note:
   - The <name> argument becomes the <name>.__TLD__ domain and vhost (folder)
@@ -55,11 +55,11 @@ __lamp__list() {
       }
       if (filter == "none" || filter == status) {
         count++
-      vhost = substr(conf, 1, length(conf) - 5)
-      len = length(vhost)
-      if (len > nlen) {
-        nlen = len
-      }
+        vhost = substr(conf, 1, length(conf) - 5)
+        len = length(vhost)
+        if (len > nlen) {
+          nlen = len
+        }
         vhosts[count] = vhost
         statuses[count] = status
       }
@@ -69,11 +69,11 @@ __lamp__list() {
       print "No domain found."
       exit 1
     }
-      nlen += 2
+    nlen += 2
     if (filter == "none") {
-    printf "%-*s %s\n", nlen, "DOMAIN", "STATUS"
+      printf "%-*s %s\n", nlen, "DOMAIN", "STATUS"
       for (i=1; i<=count; i++) {
-      printf "%-*s %s\n", nlen, vhosts[i], statuses[i]
+        printf "%-*s %s\n", nlen, vhosts[i], statuses[i]
       }
     } else {
       for (i=1; i<=count; i++) {
