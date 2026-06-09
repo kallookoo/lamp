@@ -41,7 +41,6 @@ LAMP_PHP_PACKAGES_TEMPLATE=(
   "php__VERSION__-imagick"
   "php__VERSION__-intl"
   "php__VERSION__-mbstring"
-  "php__VERSION__-memcache"
   "php__VERSION__-memcached"
   "php__VERSION__-msgpack"
   "php__VERSION__-mysql"
