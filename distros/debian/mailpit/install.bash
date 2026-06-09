@@ -11,7 +11,8 @@ fi
 mkdir -p /tmp/lamp-mailpit/bin
 systemctl stop mailpit >/dev/null 2>&1
 if download https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh "/tmp/lamp-mailpit/install.sh"; then
-  sh "/tmp/lamp-mailpit/install.sh" --install-path "/tmp/lamp-mailpit/bin" --token "${LAMP_GITHUB_TOKEN:-}" 2>&1 | tee "/tmp/lamp-mailpit/install.log" >/dev/null
+  [ -n "$LAMP_GITHUB_TOKEN" ] && LAMP_MAILPIT_GITHUB_TOKEN="--token $LAMP_GITHUB_TOKEN"
+  sh "/tmp/lamp-mailpit/install.sh" --install-path "/tmp/lamp-mailpit/bin" "${LAMP_MAILPIT_GITHUB_TOKEN:-}" 2>&1 | tee "/tmp/lamp-mailpit/install.log" >/dev/null
   if [[ -x "/tmp/lamp-mailpit/bin/mailpit" ]]; then
     cp -f "/tmp/lamp-mailpit/bin/mailpit" /usr/local/bin/mailpit
     chmod +x /usr/local/bin/mailpit
